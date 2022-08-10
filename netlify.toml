@@ -1,0 +1,18 @@
+[dev]
+  publish = "src/dist/"
+  functions = "src/api"
+
+[functions]
+  directory = "src/api"
+  node_bundler = "esbuild"
+
+
+# [[redirects]]
+#   from = "/api/factsheets/*"
+#   to = "/.netlify/functions/id?id=:splat"
+#   status = 200
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200

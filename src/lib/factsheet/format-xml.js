@@ -1,8 +1,8 @@
-export const format = (item) => /* xml */ `
+export const format = (id, item) => /* xml */ `
 <gmd:MD_Metadata xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:gmx="http://www.isotc211.org/2005/gmx" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" xsi:schemaLocation="http://www.isotc211.org/2005/gmd http://schemas.opengis.net/csw/2.0.2/profiles/apiso/1.0.0/apiso.xsd">
 <!-- TG Recommendation C.1: metadata/2.0/rec/common/fileIdentifier: The metadata record should contain a globally unique and persistent fileIdentifier element. -->
   <gmd:fileIdentifier>
-    <gco:CharacterString>123e4567-e89b-12d3-a456-426655440000</gco:CharacterString>
+    <gco:CharacterString>factsheet-${id}</gco:CharacterString>
   </gmd:fileIdentifier>
   <!-- TG Requirement C.5: metadata/2.0/req/common/metadata-language-code: The language of the provided metadata content shall be given. It shall be encoded using gmd:MD_Metadata/gmd:language/gmd:LanguageCode element pointing to one of the three-letter language codes of the ISO 639-2/B code list. Only the code values for the official languages of the European Union shall be used. The multiplicity of this element is 1. -->
   <gmd:language>
@@ -15,6 +15,33 @@ export const format = (item) => /* xml */ `
   <gmd:hierarchyLevel>
     <gmd:MD_ScopeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_ScopeCode" codeListValue="dataset"/>
   </gmd:hierarchyLevel>
+  <!-- TG Requirement C.6: metadata/2.0/req/common/md-point-of-contact: Point of contact for the responsible party for the provided metadata shall be given using element gmd:MD_metadata/gmd:contact/gmd:CI_ResponsibleParty. The multiplicity of this element is 1..*. The gmd:CI_ResponsibleParty element shall contain the following child elements: The name of the responsible organisation shall be provided as the value of gmd:organisationName element with a Non-empty Free Text Element content. The email address of the organisation shall be provided as the value of gmd:contactInfo/gmd:CI_Contact/gmd:address/gmd:CI_Address/gmd:electronicMailAddress element with a Non-empty Free Text Element containing a functioning email address of the responsible party. The value of gmd:role/gmd:CI_RoleCode shall point to the value "pointOfContact" of [ISO 19139] code list CI_RoleCode. -->
+  <gmd:contact>
+    <gmd:CI_ResponsibleParty>
+      <gmd:organisationName>
+        <gco:CharacterString>Deltares</gco:CharacterString>
+      </gmd:organisationName>
+      <gmd:contactInfo>
+        <gmd:CI_Contact>
+          <gmd:address>
+            <gmd:CI_Address>
+              <gmd:electronicMailAddress>
+                <gco:CharacterString>deltaresdata@deltares.nl</gco:CharacterString>
+              </gmd:electronicMailAddress>
+            </gmd:CI_Address>
+          </gmd:address>
+        </gmd:CI_Contact>
+      </gmd:contactInfo>
+      <gmd:role>
+        <gmd:CI_RoleCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_RoleCode" codeListValue="pointOfContact" />
+      </gmd:role>
+    </gmd:CI_ResponsibleParty>
+  </gmd:contact>
+  <!-- TG Requirement C.7: metadata/2.0/req/common/md-date: The latest update date of the metadata description shall be given for each metadata record. It shall be encoded using the gmd:MD_Metadata/gmd:dateStamp element. If no updates to the metadata have been made since publishing it, the creation date of the metadata shall be used instead. The multiplicity of this element is 1. -->
+  <gmd:dateStamp>
+    <gco:DateTime>${item._updatedAt}</gco:DateTime>
+  <!--  To also specify the time zone (optional), the value would be e.g. 2019-05-15T09:00:00+02:00  -->
+  </gmd:dateStamp>
   <!-- TG Requirement 1.2: metadata/2.0/req/datasets-and-series/only-one-md-data-identification: The first gmd:identificationInfo property of gmd:MD_Metadata element shall contain only one gmd:MD_DataIdentification element for identifying the described INSPIRE data set or data set series. -->
   <gmd:identificationInfo>
     <gmd:MD_DataIdentification>
@@ -68,6 +95,31 @@ export const format = (item) => /* xml */ `
       <gmd:abstract>
         <gco:CharacterString>${item.metadata.abstract}</gco:CharacterString>
       </gmd:abstract>
+      <!-- TG Requirement C.10: metadata/2.0/req/common/responsible-organisation: The point of contact for the organisation responsible for the establishment, management, maintenance and distribution of the described resource shall be given using element gmd:pointOfContact/gmd:CI_ResponsibleParty. The multiplicity of this element is 1..*.
+      The gmd:CI_ResponsibleParty element shall contain the following child elements: The name of the organisation shall be given as the value of gmd:pointOfContact/gmd:CI_ResponsibleParty/gmd:organisationName element with a Non-empty Free Text Element content.
+      The email address of the organisation shall be provided as the value of gmd:pointOfContact/gmd:CI_ResponsibleParty/gmd:contactInfo/gmd:CI_Contact/gmd:address/gmd:CI_Address/gmd:electronicMailAddress element with a Non-empty Free Text Element containing a functioning email address of the responsible party.
+      The value of gmd:pointOfContact/gmd:CI_ResponsibleParty/gmd:role/gmd:CI_RoleCode shall point to the most relevant value of ISO 19139 code list CI_RoleCode. -->
+      <gmd:pointOfContact>
+        <gmd:CI_ResponsibleParty>
+          <gmd:organisationName>
+            <gco:CharacterString>Deltares</gco:CharacterString>
+          </gmd:organisationName>
+          <gmd:contactInfo>
+            <gmd:CI_Contact>
+              <gmd:address>
+                <gmd:CI_Address>
+                  <gmd:electronicMailAddress>
+                    <gco:CharacterString>deltaresdata@deltares.nl</gco:CharacterString>
+                  </gmd:electronicMailAddress>
+                </gmd:CI_Address>
+              </gmd:address>
+            </gmd:CI_Contact>
+          </gmd:contactInfo>
+          <gmd:role>
+            <gmd:CI_RoleCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_RoleCode" codeListValue="owner" />
+          </gmd:role>
+        </gmd:CI_ResponsibleParty>
+      </gmd:pointOfContact>
       <!-- TG Requirement C.15: metadata/2.0/req/common/keyword-originating-cv: When using keywords originating from a controlled vocabulary, the originating controlled vocabulary shall be cited using gmd:descriptiveKeywords/gmd:MD_Keywords/gmd:thesaurusName/gmd:CI_Citation element.
       The title of the vocabulary shall be given using gmd:title element with a Non-empty Free Text Element content.
       The publication date of the vocabulary shall be given using the gmd:date/gmd:CI_Date/gmd:date/gco:Date and gmd:dateType/gmd:CI_DateTypeCode elements. -->

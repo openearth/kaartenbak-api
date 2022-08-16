@@ -6,9 +6,32 @@ const convert = require('xml-js')
 const query = /* graphql */ `
 query FactsheetById($id: ItemId) {
   factsheet(filter: {id: {eq: $id}}) {
+    _updatedAt
     id
     title
     urlOriginalFile
+    naamAansturendeOrganisatie
+    datumVoltooiing
+    doelWaarvoorDataWordenVerzameld
+    naamUitvoerendeDienstOrganisatie
+    rolContactpersoon
+    geografischGebied
+    gebruiksbeperkingen
+    overigeBeperkingenInGebruik
+    temporeleDekking
+    volledigheid
+    nauwkeurigheid
+    algemeneBeschrijvingVanHerkomst
+    inwinningsmethode
+    beschrijvingUitgevoerdeBewerkingen
+    meetvariabelen
+    meetmethodiek
+    soortDataset
+    verplichtingVanuitEuropeseRichtlijn
+    kostenOpJaarbasis
+    soortenoverzicht
+    habitats
+    referenties
     metadata {
       citationTitle
       citationDateDate
@@ -67,7 +90,7 @@ exports.handler = async (event, context) => {
 
     switch (format) {
       case 'xml':
-        formatted = formatXml(data.factsheet)
+        formatted = formatXml(id, data.factsheet)
         break
       case 'html':
         formatted = formatHtml(data.factsheet)

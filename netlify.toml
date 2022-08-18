@@ -6,6 +6,10 @@
   directory = "src/api"
   node_bundler = "esbuild"
 
+[[redirects]]
+  from = "/"
+  to = "/.netlify/functions/index"
+  status = 200
 
 # [[redirects]]
 #   from = "/api/factsheets/*"

@@ -84,8 +84,6 @@ exports.handler = async (event, context) => {
   try {
     const data = await datocmsRequest({ query, variables: { id } })
 
-    console.log(data)
-
     let formatted
 
     switch (format) {
@@ -96,7 +94,7 @@ exports.handler = async (event, context) => {
         formatted = formatHtml(data.factsheet)
         break
       case 'json':
-        formatted = convert.xml2json(formatXml(data.factsheet), {
+        formatted = convert.xml2json(formatXml(id, data.factsheet), {
           compact: true,
         })
         break

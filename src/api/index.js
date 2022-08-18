@@ -13,8 +13,6 @@ exports.handler = async (event, context) => {
   try {
     const data = await datocmsRequest({ query })
 
-    console.log(data)
-
     const html = /* html */ `
     <!DOCTYPE html>
     <html>
@@ -44,6 +42,7 @@ exports.handler = async (event, context) => {
       body: html,
       headers: {
         'content-type': 'text/html',
+        'Access-Control-Allow-Origin': '*',
       },
     }
   } catch (error) {

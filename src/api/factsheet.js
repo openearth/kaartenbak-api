@@ -105,6 +105,7 @@ exports.handler = async (event, context) => {
       body: formatted,
       headers: {
         'content-type': contentType[format],
+        'Access-Control-Allow-Origin': '*',
       },
     }
   } catch (error) {

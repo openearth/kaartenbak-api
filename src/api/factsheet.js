@@ -37,11 +37,19 @@ query FactsheetById($id: ItemId) {
       citationDateDate
       citationDateDatetype
       abstract
+      identificationinfoStatus
+      topiccategories {
+          title
+      }
       descriptivekeywordsKeywords {
         title
       }
+      resourceconstraintsUselimitation
+      resourceconstraintsAccessconstraints
       spatialresolutionEquivalentscaleDenominator
       referencesystemidentifierCode
+      hierarchylevel
+      lineageStatement
     }
 
   }
@@ -84,19 +92,24 @@ exports.handler = async (event, context) => {
   try {
     const data = await datocmsRequest({ query, variables: { id } })
 
+    const factsheetId = 'factsheet-' + id
+
     let formatted
 
     switch (format) {
       case 'xml':
-        formatted = formatXml(id, data.factsheet)
+        formatted = formatXml({ id: factsheetId, item: data.factsheet })
         break
       case 'html':
         formatted = formatHtml(data.factsheet)
         break
       case 'json':
-        formatted = convert.xml2json(formatXml(id, data.factsheet), {
-          compact: true,
-        })
+        formatted = convert.xml2json(
+          formatXml({ id: factsheetId, item: data.factsheet }),
+          {
+            compact: true,
+          }
+        )
         break
     }
 

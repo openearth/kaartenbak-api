@@ -6,6 +6,7 @@ const fetch = require('node-fetch')
 const query = /* graphql */ `
 query LayerById($id: ItemId) {
   layer(filter: {id: {eq: $id}}) {
+    name
     url
     layer
     factsheets {

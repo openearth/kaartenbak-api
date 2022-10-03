@@ -92,7 +92,7 @@ export const format = ({ id, item, layerInfo, layer }) => /* xml */ `
         <gmd:CI_Citation>
           <gmd:title>
             <gco:CharacterString>${
-              layer.inspireMetadata.citationTitle
+              layer.name
             }</gco:CharacterString>
           </gmd:title>
           <gmd:date>

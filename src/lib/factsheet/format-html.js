@@ -8,9 +8,9 @@ export const format = (item) => /* html */ `
 <body>
   <h1>${item.title}</h1>
 
-  <section id="section-citationTitle">
+  <section id="section-titelNaamMeetMonitorprogramma">
     <h2>Titel/naam meet/monitorprogramma</h2>
-    <p>${item.metadata.citationTitle}</p>
+    <p>${item.titelNaamMeetMonitorprogramma}</p>
   </section>
 
   <section id="section-naamAansturendeOrganisatie">
@@ -23,9 +23,9 @@ export const format = (item) => /* html */ `
     <p>${item.datumVoltooiing}</p>
   </section>
 
-  <section id="section-abstract">
+  <section id="section-samenvatting">
     <h2>Samenvatting (korte beschrijving van de inhoud van de dataset)</h2>
-    <p>${item.metadata.abstract}</p>
+    <p>${item.samenvatting}</p>
   </section>
 
   <section id="section-doelWaarvoorDataWordenVerzameld">
@@ -58,10 +58,10 @@ export const format = (item) => /* html */ `
     <p>${item.overigeBeperkingenInGebruik}</p>
   </section>
 
-  <section id="section-descriptivekeywordsKeywords">
+  <section id="section-themas">
     <h2>Thema's (b.v. diversiteit, verspreiding, trends, reproductiesucces)</h2>
-    <p>${item.metadata.descriptivekeywordsKeywords
-      .map((keyword) => keyword.title)
+    <p>${item.themas
+      .map((thema) => thema.title)
       .join(', ')}
     </p>
   </section>

@@ -14,7 +14,7 @@ export const format = ({ id, item, layerInfo, layer }) => /* xml */ `
   <!-- TG Requirement 1.1: metadata/2.0/req/datasets-and-series/resource-type: The resource type shall be declared as "dataset" or "series" using the first gmd:hierarchyLevel child element of gmd:MD_Metadata. The gmd:hierarchyLevel shall contain a gmd:MD_ScopeCode element. -->
   <gmd:hierarchyLevel>
     <gmd:MD_ScopeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_ScopeCode" codeListValue="${
-      item.metadata.hierarchylevel
+      layer.inspireMetadata.hierarchylevel
     }"/>
   </gmd:hierarchyLevel>
   <!-- TG Requirement C.6: metadata/2.0/req/common/md-point-of-contact: Point of contact for the responsible party for the provided metadata shall be given using element gmd:MD_metadata/gmd:contact/gmd:CI_ResponsibleParty. The multiplicity of this element is 1..*. The gmd:CI_ResponsibleParty element shall contain the following child elements: The name of the responsible organisation shall be provided as the value of gmd:organisationName element with a Non-empty Free Text Element content. The email address of the organisation shall be provided as the value of gmd:contactInfo/gmd:CI_Contact/gmd:address/gmd:CI_Address/gmd:electronicMailAddress element with a Non-empty Free Text Element containing a functioning email address of the responsible party. The value of gmd:role/gmd:CI_RoleCode shall point to the value "pointOfContact" of [ISO 19139] code list CI_RoleCode. -->
@@ -92,24 +92,24 @@ export const format = ({ id, item, layerInfo, layer }) => /* xml */ `
         <gmd:CI_Citation>
           <gmd:title>
             <gco:CharacterString>${
-              item.metadata.citationTitle
+              layer.inspireMetadata.citationTitle
             }</gco:CharacterString>
           </gmd:title>
           <gmd:date>
             <gmd:CI_Date>
               <gmd:date>
-                <gco:Date>${item.metadata.citationDateDate}</gco:Date>
+                <gco:Date>${layer.inspireMetadata.citationDateDate}</gco:Date>
               </gmd:date>
               <gmd:dateType>
                 <gmd:CI_DateTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_DateTypeCode" codeListValue="${
-                  item.metadata.citationDateDatetype
+                  layer.inspireMetadata.citationDateDatetype
                 }">
                 ${
                   {
                     creation: 'Creation',
                     publication: 'Publication',
                     revision: 'Revision',
-                  }[item.metadata.citationDateDatetype]
+                  }[layer.inspireMetadata.citationDateDatetype]
                 }
               </gmd:CI_DateTypeCode>
               </gmd:dateType>
@@ -130,12 +130,12 @@ export const format = ({ id, item, layerInfo, layer }) => /* xml */ `
       </gmd:citation>
       <!-- TG Requirement C.9: metadata/2.0/req/common/resource-abstract: A non-empty brief narrative summary of the content of the described data set, data set series or service shall be provided. It shall be encoded using the gmd:abstract element with a Non-empty Free Text Element content in the language of the metadata. The multiplicity of this element is 1. -->
       <gmd:abstract>
-        <gco:CharacterString>${item.metadata.abstract}</gco:CharacterString>
+        <gco:CharacterString>${layer.inspireMetadata.abstract}</gco:CharacterString>
       </gmd:abstract>
 
       <gmd:status>
         <gmd:MD_ProgressCode codeListValue="${
-          item.metadata.identificationinfoStatus
+          layer.inspireMetadata.identificationinfoStatus
         }" codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_ProgressCode"/>
       </gmd:status>
       <!-- TG Requirement C.10: metadata/2.0/req/common/responsible-organisation: The point of contact for the organisation responsible for the establishment, management, maintenance and distribution of the described resource shall be given using element gmd:pointOfContact/gmd:CI_ResponsibleParty. The multiplicity of this element is 1..*.
@@ -171,7 +171,7 @@ export const format = ({ id, item, layerInfo, layer }) => /* xml */ `
       For each INSPIRE Spatial Data Theme, a gmd:keyword element shall be included with -->
       <gmd:descriptiveKeywords>
         <gmd:MD_Keywords>
-          ${item.metadata.descriptivekeywordsKeywords
+          ${layer.inspireMetadata.descriptivekeywordsKeywords
             .map(
               (keyword) =>
                 `<gmd:keyword>
@@ -233,7 +233,7 @@ export const format = ({ id, item, layerInfo, layer }) => /* xml */ `
         <gmd:MD_LegalConstraints>
           <gmd:useLimitation>
             <gco:CharacterString>${
-              item.metadata.resourceconstraintsUselimitation
+              layer.inspireMetadata.resourceconstraintsUselimitation
             }</gco:CharacterString>
           </gmd:useLimitation>
         </gmd:MD_LegalConstraints>
@@ -252,7 +252,7 @@ export const format = ({ id, item, layerInfo, layer }) => /* xml */ `
             <gmd:MD_RepresentativeFraction>
               <gmd:denominator>
                 <gco:Integer>${
-                  item.metadata.spatialresolutionEquivalentscaleDenominator
+                  layer.inspireMetadata.spatialresolutionEquivalentscaleDenominator
                 }</gco:Integer>
               </gmd:denominator>
             </gmd:MD_RepresentativeFraction>
@@ -267,7 +267,7 @@ export const format = ({ id, item, layerInfo, layer }) => /* xml */ `
         <gmd:LanguageCode codeList="http://www.loc.gov/standards/iso639-2/" codeListValue="dut">Dutch</gmd:LanguageCode>
       </gmd:language>
 
-      ${item.metadata.topiccategories.map(category => `
+      ${layer.inspireMetadata.topiccategories.map(category => `
         <gmd:topicCategory>
           <gmd:MD_TopicCategoryCode>${
             category.title
@@ -423,7 +423,7 @@ export const format = ({ id, item, layerInfo, layer }) => /* xml */ `
         <gmd:LI_Lineage>
           <gmd:statement>
             <gco:CharacterString>${
-              item.metadata.lineageStatement
+              layer.inspireMetadata.lineageStatement
             }</gco:CharacterString>
           </gmd:statement>
         </gmd:LI_Lineage>

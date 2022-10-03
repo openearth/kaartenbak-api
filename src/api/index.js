@@ -28,8 +28,7 @@ exports.handler = async (event, context) => {
           <li>
             <h3>${factsheet.title}</h3>
             <a href="/api/factsheet?id=${factsheet.id}&format=html">HTML</a>
-            <a href="/api/factsheet?id=${factsheet.id}&format=xml">INSPIRE XML</a>
-            <a href="/api/factsheet?id=${factsheet.id}&format=json">INSPIRE JSON</a>
+            <a href="/api/factsheet?id=${factsheet.id}&format=json">JSON</a>
           </li>`
         )}
       </ul>

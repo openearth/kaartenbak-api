@@ -35,7 +35,8 @@ query LayerById($id: ItemId) {
       soortenoverzicht
       habitats
       referenties
-      metadata {
+    }
+    inspireMetadata {
         citationTitle
         citationDateDate
         citationDateDatetype
@@ -54,7 +55,6 @@ query LayerById($id: ItemId) {
         hierarchylevel
         lineageStatement
       }
-    }
   }
 }
 `

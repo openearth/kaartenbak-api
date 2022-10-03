@@ -9,15 +9,20 @@ query FactsheetById($id: ItemId) {
     _updatedAt
     id
     title
+    titelNaamMeetMonitorprogramma
     urlOriginalFile
     naamAansturendeOrganisatie
     datumVoltooiing
+    samenvatting
     doelWaarvoorDataWordenVerzameld
     naamUitvoerendeDienstOrganisatie
     rolContactpersoon
     geografischGebied
     gebruiksbeperkingen
     overigeBeperkingenInGebruik
+    themas {
+      title
+    }
     temporeleDekking
     volledigheid
     nauwkeurigheid
@@ -32,32 +37,11 @@ query FactsheetById($id: ItemId) {
     soortenoverzicht
     habitats
     referenties
-    metadata {
-      citationTitle
-      citationDateDate
-      citationDateDatetype
-      abstract
-      identificationinfoStatus
-      topiccategories {
-          title
-      }
-      descriptivekeywordsKeywords {
-        title
-      }
-      resourceconstraintsUselimitation
-      resourceconstraintsAccessconstraints
-      spatialresolutionEquivalentscaleDenominator
-      referencesystemidentifierCode
-      hierarchylevel
-      lineageStatement
-    }
-
   }
 }
 `
 
 const contentType = {
-  xml: 'application/xml',
   html: 'text/html',
   json: 'application/json',
 }
@@ -79,7 +63,7 @@ exports.handler = async (event, context) => {
     }
   }
 
-  if (!['json', 'xml', 'html'].includes(format)) {
+  if (!['json', 'html'].includes(format)) {
     return {
       statusCode: 400,
       body: JSON.stringify({
@@ -92,24 +76,14 @@ exports.handler = async (event, context) => {
   try {
     const data = await datocmsRequest({ query, variables: { id } })
 
-    const factsheetId = 'factsheet-' + id
-
     let formatted
 
     switch (format) {
-      case 'xml':
-        formatted = formatXml({ id: factsheetId, item: data.factsheet })
-        break
       case 'html':
         formatted = formatHtml(data.factsheet)
         break
       case 'json':
-        formatted = convert.xml2json(
-          formatXml({ id: factsheetId, item: data.factsheet }),
-          {
-            compact: true,
-          }
-        )
+        formatted = JSON.stringify(data.factsheet)
         break
     }
 

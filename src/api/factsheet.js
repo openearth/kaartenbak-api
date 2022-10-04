@@ -1,7 +1,5 @@
 const { datocmsRequest } = require('../lib/datocms')
-const { format: formatXml } = require('../lib/factsheet/format-xml')
 const { format: formatHtml } = require('../lib/factsheet/format-html')
-const convert = require('xml-js')
 
 const query = /* graphql */ `
 query FactsheetById($id: ItemId) {

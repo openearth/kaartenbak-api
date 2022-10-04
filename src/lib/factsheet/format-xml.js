@@ -1,4 +1,4 @@
-export const format = ({ id, item, layerInfo, layer }) => /* xml */ `
+export const format = ({ id, layerInfo, layer }) => /* xml */ `
 <gmd:MD_Metadata xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:gmx="http://www.isotc211.org/2005/gmx" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" xsi:schemaLocation="http://www.isotc211.org/2005/gmd http://schemas.opengis.net/csw/2.0.2/profiles/apiso/1.0.0/apiso.xsd">
 <!-- TG Recommendation C.1: metadata/2.0/rec/common/fileIdentifier: The metadata record should contain a globally unique and persistent fileIdentifier element. -->
   <gmd:fileIdentifier>
@@ -41,7 +41,7 @@ export const format = ({ id, item, layerInfo, layer }) => /* xml */ `
   </gmd:contact>
   <!-- TG Requirement C.7: metadata/2.0/req/common/md-date: The latest update date of the metadata description shall be given for each metadata record. It shall be encoded using the gmd:MD_Metadata/gmd:dateStamp element. If no updates to the metadata have been made since publishing it, the creation date of the metadata shall be used instead. The multiplicity of this element is 1. -->
   <gmd:dateStamp>
-    <gco:Date>${item._updatedAt.split('T')[0]}</gco:Date>
+    <gco:Date>${layer.inspireMetadata._updatedAt.split('T')[0]}</gco:Date>
   <!--  To also specify the time zone (optional), the value would be e.g. 2019-05-15T09:00:00+02:00  -->
   </gmd:dateStamp>
 

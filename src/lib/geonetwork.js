@@ -14,8 +14,6 @@ export const geonetworkRequest = async ({ url, method }) => {
   const cookie = me.headers.get('set-cookie')
   const token = cookie.split(';')[0].split('=')[1]
 
-  console.log(BASE_URL + url)
-
   // Use X-XSRF-TOKEN and Cookie in a request
   return fetch(
     BASE_URL + url,

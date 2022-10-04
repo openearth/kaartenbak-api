@@ -9,35 +9,8 @@ query LayerById($id: ItemId) {
     name
     url
     layer
-    factsheets {
-      _updatedAt
-      id
-      title
-      urlOriginalFile
-      naamAansturendeOrganisatie
-      datumVoltooiing
-      doelWaarvoorDataWordenVerzameld
-      naamUitvoerendeDienstOrganisatie
-      rolContactpersoon
-      geografischGebied
-      gebruiksbeperkingen
-      overigeBeperkingenInGebruik
-      temporeleDekking
-      volledigheid
-      nauwkeurigheid
-      algemeneBeschrijvingVanHerkomst
-      inwinningsmethode
-      beschrijvingUitgevoerdeBewerkingen
-      meetvariabelen
-      meetmethodiek
-      soortDataset
-      verplichtingVanuitEuropeseRichtlijn
-      kostenOpJaarbasis
-      soortenoverzicht
-      habitats
-      referenties
-    }
     inspireMetadata {
+        _updatedAt
         citationTitle
         citationDateDate
         citationDateDatetype
@@ -111,8 +84,6 @@ exports.handler = async (event, context) => {
       (layer) => layer.Name._text === data.layer.layer
     )
 
-    const factsheet = data.layer.factsheets[0]
-
     const layerId = 'layer-' + id
 
     let formatted
@@ -121,7 +92,6 @@ exports.handler = async (event, context) => {
       case 'xml':
         formatted = formatXml({
           id: layerId,
-          item: factsheet,
           layerInfo,
           layer: data.layer,
         })
@@ -130,7 +100,6 @@ exports.handler = async (event, context) => {
         formatted = convert.xml2json(
           formatXml({
             id: layerId,
-            item: factsheet,
             layerInfo,
             layer: data.layer,
           }),

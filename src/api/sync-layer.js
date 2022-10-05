@@ -5,6 +5,16 @@ const url = '/records'
 
 exports.handler = async (event, context) => {
   try {
+    if (process.env.SYNC_LAYER_API_TOKEN !== event.headers['x-api-key']) {
+      return {
+        statusCode: 401,
+        headers: {
+          'content-type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      }
+    }
+
     const layerData = JSON.parse(event.body)
 
     switch (layerData.event_type) {

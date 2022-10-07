@@ -8,6 +8,7 @@ query Layers ($first: IntType, $skip: IntType = 0) {
     children: layers {
       id
       name
+      description
       indexableWfsProperties
     }
     parent {
@@ -45,11 +46,11 @@ function findLayers(menu, query, foundLayers = []) {
           property?.keywords?.includes(query)
         )
       ) {
-        const { id, name } = menu
+        const { name, description } = menu
 
         foundLayers.push({
-          id,
           name,
+          description,
         })
       }
     })

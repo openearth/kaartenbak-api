@@ -46,9 +46,10 @@ function findLayers(menu, query, foundLayers = []) {
           property?.keywords?.includes(query)
         )
       ) {
-        const { name, description } = menu
+        const { id, name, description } = menu
 
         foundLayers.push({
+          id,
           name,
           description,
         })

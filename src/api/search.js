@@ -43,7 +43,9 @@ function findLayers(menu, query, foundLayers = []) {
       if (
         key.match('indexableWfsProperties') &&
         menu?.indexableWfsProperties?.some((property) =>
-          property?.keywords?.includes(query)
+          property?.keywords?.some((keyword) =>
+            Boolean(keyword?.toLowerCase().match(query.toLowerCase()))
+          )
         )
       ) {
         const { id, name, description } = menu

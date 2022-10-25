@@ -33,6 +33,24 @@ function buildChildrenTree(items) {
   })
 }
 
+function isMatchCaseInsensitive(value, search) {
+  return value?.toLowerCase().indexOf(search) > -1
+}
+
+function layerMatches(key, indexableWfsProperties, name, description, query) {
+  return (
+    key.match('indexableWfsProperties') &&
+    indexableWfsProperties?.some(
+      (property) =>
+        property?.keywords?.some((keyword) =>
+          isMatchCaseInsensitive(keyword, query)
+        ) ||
+        isMatchCaseInsensitive(name, query) ||
+        isMatchCaseInsensitive(description, query)
+    )
+  )
+}
+
 function findLayers(menu, query, foundLayers = []) {
   menu &&
     Object.keys(menu).forEach((key) => {
@@ -40,15 +58,10 @@ function findLayers(menu, query, foundLayers = []) {
         findLayers(menu[key], query, foundLayers)
       }
 
-      if (
-        key.match('indexableWfsProperties') &&
-        menu?.indexableWfsProperties?.some((property) =>
-          property?.keywords?.some((keyword) =>
-            Boolean(keyword?.toLowerCase().match(query.toLowerCase()))
-          )
-        )
-      ) {
-        const { id, name, description } = menu
+      const { name, description, indexableWfsProperties } = menu
+
+      if (layerMatches(key, indexableWfsProperties, name, description, query)) {
+        const { id } = menu
 
         foundLayers.push({
           id,
@@ -93,7 +106,8 @@ exports.handler = async (event, context) => {
       }
     }
 
-    const layers = findLayers(menu, query)
+    const lowerCaseQuery = query.toLowerCase()
+    const layers = findLayers(menu, lowerCaseQuery)
 
     return {
       statusCode: 200,

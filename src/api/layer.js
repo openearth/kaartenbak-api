@@ -68,7 +68,6 @@ query LayerById($id: ItemId) {
       meetvariabelen
       meetmethodiek
       soortDataset
-      verplichtingVanuitEuropeseRichtlijn
       kostenOpJaarbasis
       soortenoverzicht
       habitats

@@ -1,4 +1,4 @@
-import { dateTypes } from './constants';
+import { dateTypes } from './constants'
 
 export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
 <gmd:MD_Metadata xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:gmx="http://www.isotc211.org/2005/gmx" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" xsi:schemaLocation="http://www.isotc211.org/2005/gmd http://schemas.opengis.net/csw/2.0.2/profiles/apiso/1.0.0/apiso.xsd">
@@ -94,9 +94,7 @@ export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
       <gmd:citation>
         <gmd:CI_Citation>
           <gmd:title>
-            <gco:CharacterString>${
-              layer.name
-            }</gco:CharacterString>
+            <gco:CharacterString>${layer.name}</gco:CharacterString>
           </gmd:title>
           <gmd:date>
             <gmd:CI_Date>
@@ -107,9 +105,7 @@ export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
                 <gmd:CI_DateTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_DateTypeCode" codeListValue="${
                   factsheet.datumtypeVanDeBron
                 }">
-                ${
-                  dateTypes[factsheet.datumtypeVanDeBron]
-                }
+                ${dateTypes[factsheet.datumtypeVanDeBron]}
               </gmd:CI_DateTypeCode>
               </gmd:dateType>
             </gmd:CI_Date>
@@ -305,6 +301,23 @@ export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
       `
           : ''
       }
+      <gmd:supplementalInformation>
+        <gco:CharacterString>${factsheet.titelNaamMeetMonitorprogramma} - ${
+  factsheet.urlOriginalFile
+} - ${factsheet.naamAansturendeOrganisatie} - ${factsheet.datumVoltooiing} - ${
+  factsheet.doelWaarvoorDataWordenVerzameld
+} - ${factsheet.rolContactpersoon} - ${factsheet.geografischGebied} - ${
+  factsheet.overigeBeperkingenInGebruik
+} - ${factsheet.temporeleDekking} - ${factsheet.volledigheid} - ${
+  factsheet.nauwkeurigheid
+} - ${factsheet.inwinningsmethode} - ${
+  factsheet.beschrijvingUitgevoerdeBewerkingen
+} - ${factsheet.meetvariabelen} - ${factsheet.meetmethodiek} - ${
+  factsheet.soortDataset
+} - ${factsheet.kostenOpJaarbasis} - ${factsheet.soortenoverzicht} - ${
+  factsheet.habitats
+} - ${factsheet.verplichtingVanuitEuropeseRichtlijn}</gco:CharacterString>
+      </gmd:supplementalInformation>
     </gmd:MD_DataIdentification>
   </gmd:identificationInfo>
   ${
@@ -424,7 +437,7 @@ export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
         <gmd:LI_Lineage>
           <gmd:statement>
             <gco:CharacterString>${
-              factsheet.algemeneBeschrijvingHerkomst
+              factsheet.algemeneBeschrijvingVanHerkomst
             }</gco:CharacterString>
           </gmd:statement>
         </gmd:LI_Lineage>

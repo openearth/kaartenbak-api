@@ -72,8 +72,6 @@ query LayerById($id: ItemId) {
       kostenOpJaarbasis
       soortenoverzicht
       habitats
-      referenties
-      algemeneBeschrijvingHerkomst
     }
   }
 }

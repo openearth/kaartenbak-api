@@ -316,7 +316,7 @@ export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
   factsheet.soortDataset
 } - ${factsheet.kostenOpJaarbasis} - ${factsheet.soortenoverzicht} - ${
   factsheet.habitats
-} - ${factsheet.verplichtingVanuitEuropeseRichtlijn}</gco:CharacterString>
+}</gco:CharacterString>
       </gmd:supplementalInformation>
     </gmd:MD_DataIdentification>
   </gmd:identificationInfo>

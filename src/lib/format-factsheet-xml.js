@@ -95,7 +95,7 @@ export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
         <gmd:CI_Citation>
           <gmd:title>
             <gco:CharacterString>${
-              factsheet.titelNaamMeetMonitorprogramma
+              layer.name
             }</gco:CharacterString>
           </gmd:title>
           <gmd:date>

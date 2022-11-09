@@ -17,6 +17,8 @@ exports.handler = async (event, context) => {
 
     const layerData = JSON.parse(event.body)
 
+    console.log(layerData)
+
     switch (layerData.event_type) {
       case 'create':
         const request = await geonetworkRequest({
@@ -34,6 +36,7 @@ exports.handler = async (event, context) => {
         })
 
         break
+      case 'update':
       case 'publish':
         await geonetworkRequest({
           url:
@@ -47,8 +50,9 @@ exports.handler = async (event, context) => {
 
         break
       case 'delete':
+        console.log("geonetwerk_id", layerData.entity.attributes.geonetwerk_id)
         await geonetworkRequest({
-          url: url + `?uuids=${layerData.entity.attributes.geonetwerk_id}`,
+          url: url + `/${layerData.entity.attributes.geonetwerk_id}`,
           method: 'DELETE',
         })
 

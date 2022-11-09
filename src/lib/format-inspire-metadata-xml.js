@@ -1,3 +1,5 @@
+import { dateTypes } from './constants';
+
 export const format = ({ id, layerInfo, layer }) => /* xml */ `
 <gmd:MD_Metadata xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:gmx="http://www.isotc211.org/2005/gmx" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" xsi:schemaLocation="http://www.isotc211.org/2005/gmd http://schemas.opengis.net/csw/2.0.2/profiles/apiso/1.0.0/apiso.xsd">
 <!-- TG Recommendation C.1: metadata/2.0/rec/common/fileIdentifier: The metadata record should contain a globally unique and persistent fileIdentifier element. -->
@@ -105,11 +107,7 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
                   layer.inspireMetadata.citationDateDatetype
                 }">
                 ${
-                  {
-                    creation: 'Creation',
-                    publication: 'Publication',
-                    revision: 'Revision',
-                  }[layer.inspireMetadata.citationDateDatetype]
+                  dateTypes[layer.inspireMetadata.citationDateDatetype]
                 }
               </gmd:CI_DateTypeCode>
               </gmd:dateType>

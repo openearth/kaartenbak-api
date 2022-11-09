@@ -1,5 +1,5 @@
 const { datocmsRequest } = require('../lib/datocms')
-const { format: formatHtml } = require('../lib/factsheet/format-html')
+const { format: formatHtml } = require('../lib/format-html')
 
 const query = /* graphql */ `
 query FactsheetById($id: ItemId) {
@@ -66,7 +66,7 @@ exports.handler = async (event, context) => {
       statusCode: 400,
       body: JSON.stringify({
         error:
-          'format query parameter must be one of the following values: json|xml|html',
+          'format query parameter must be one of the following values: json|html',
       }),
     }
   }

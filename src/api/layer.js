@@ -1,5 +1,8 @@
 const { datocmsRequest } = require('../lib/datocms')
-const { format: formatXml } = require('../lib/factsheet/format-xml')
+const {
+  format: formatInspireMetadataXml,
+} = require('../lib/format-inspire-metadata-xml')
+const { format: formatFactsheetXml } = require('../lib/format-factsheet-xml')
 const convert = require('xml-js')
 const fetch = require('node-fetch')
 
@@ -9,6 +12,7 @@ query LayerById($id: ItemId) {
     name
     url
     layer
+    useFactsheetAsMetadata
     inspireMetadata {
         _updatedAt
         citationTitle
@@ -29,6 +33,48 @@ query LayerById($id: ItemId) {
         hierarchylevel
         lineageStatement
       }
+    factsheets {
+      _updatedAt
+      id
+      title
+      titelNaamMeetMonitorprogramma
+      urlOriginalFile
+      naamAansturendeOrganisatie
+      datumVoltooiing
+      datumVanDeBron
+      datumtypeVanDeBron
+      samenvatting
+      identificationinfoStatus
+      doelWaarvoorDataWordenVerzameld
+      onderwerp {
+        title
+      }
+      naamUitvoerendeDienstOrganisatie
+      rolContactpersoon
+      geografischGebied
+      toepassingsschaal
+      gebruiksbeperkingen
+      overigeBeperkingenInGebruik
+      themas {
+        title
+      }
+      temporeleDekking
+      hierarchieniveau
+      volledigheid
+      nauwkeurigheid
+      algemeneBeschrijvingVanHerkomst
+      inwinningsmethode
+      beschrijvingUitgevoerdeBewerkingen
+      meetvariabelen
+      meetmethodiek
+      soortDataset
+      verplichtingVanuitEuropeseRichtlijn
+      kostenOpJaarbasis
+      soortenoverzicht
+      habitats
+      referenties
+      algemeneBeschrijvingHerkomst
+    }
   }
 }
 `
@@ -84,30 +130,32 @@ exports.handler = async (event, context) => {
       (layer) => layer.Name._text === data.layer.layer
     )
 
-    const layerId = 'layer-' + id
-
     let formatted
 
-    switch (format) {
-      case 'xml':
-        formatted = formatXml({
-          id: layerId,
-          layerInfo,
-          layer: data.layer,
-        })
-        break
-      case 'json':
-        formatted = convert.xml2json(
-          formatXml({
-            id: layerId,
-            layerInfo,
-            layer: data.layer,
-          }),
-          {
-            compact: true,
-          }
-        )
-        break
+    if (data.layer.useFactsheetAsMetadata) {
+      const factsheet = data.layer.factsheets[0]
+      const factsheetId = 'factsheet-' + factsheet.id
+    
+      formatted = formatFactsheetXml({
+        id: factsheetId,
+        layerInfo,
+        layer: data.layer,
+        factsheet: factsheet
+      })
+    } else {
+      const layerId = 'layer-' + id
+
+      formatted = formatInspireMetadataXml({
+        id: layerId,
+        layerInfo,
+        layer: data.layer,
+      })
+    }
+
+    if (format === 'json') {
+      formatted = convert.xml2json(formatted, {
+        compact: true
+      })
     }
 
     return {

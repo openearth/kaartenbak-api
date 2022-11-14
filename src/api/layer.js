@@ -5,8 +5,6 @@ const {
 const { format: formatFactsheetXml } = require('../lib/format-factsheet-xml')
 const convert = require('xml-js')
 const fetch = require('node-fetch')
-const { geonetworkRequest } = require('../lib/geonetwork')
-const FormData = require('form-data')
 
 const query = /* graphql */ `
 query LayerById($id: ItemId) {
@@ -135,19 +133,17 @@ exports.handler = async (event, context) => {
 
     if (data.layer.useFactsheetAsMetadata) {
       const factsheet = data.layer.factsheets[0]
-      const factsheetId = 'factsheet-' + id
 
       formatted = formatFactsheetXml({
-        id: factsheetId,
+        id,
         layerInfo,
         layer: data.layer,
         factsheet: factsheet,
       })
     } else {
-      const layerId = 'layer-' + id
 
       formatted = formatInspireMetadataXml({
-        id: layerId,
+        id,
         layerInfo,
         layer: data.layer,
       })

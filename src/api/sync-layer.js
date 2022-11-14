@@ -105,7 +105,12 @@ exports.handler = async (event, context) => {
               `https://kaartenbak.netlify.app/api/layer?id=${layerData.entity.id}&format=xml`
             ),
           method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          }
         })
+
+        console.log(request)
 
         await datocmsClient.items.update(layerData.entity.id, {
           geonetwerk_id: request.uuid,
@@ -121,6 +126,9 @@ exports.handler = async (event, context) => {
               `https://kaartenbak.netlify.app/api/layer?id=${layerData.entity.id}&format=xml`
             ),
           method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          }
         })
 
         break
@@ -128,6 +136,9 @@ exports.handler = async (event, context) => {
         await geonetworkRequest({
           url: url + `/${layerData.entity.attributes.geonetwerk_id}`,
           method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          }
         })
 
         break
@@ -147,7 +158,7 @@ exports.handler = async (event, context) => {
           (useFactsheetAsMetadata ? 'factsheet' : 'layer') +
           `-${layerData.entity.id}`
 
-        await addThumbnailsToRecord(thumbnails, id)
+        // await addThumbnailsToRecord(thumbnails, id)
     }
 
     return {

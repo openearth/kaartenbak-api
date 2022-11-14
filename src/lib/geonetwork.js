@@ -37,11 +37,10 @@ export const geonetworkRequest = async ({
       'X-XSRF-TOKEN': token,
       Cookie: cookie.toString(),
       Accept: 'application/json',
-      // 'Content-Type': 'application/json',
       ...headers,
     },
   }).then(async (res) => {
-    if (options.responseText) {
+    if (options.asText) {
       return res.text()
     }
 

@@ -1,5 +1,6 @@
 const { datocmsRequest } = require('../lib/datocms')
 const { withServerError } = require('../lib/with-server-error')
+const { formatFactsheetOverviewHTML } = require('../lib/format-factsheets-overview-html')
 
 const query = /* graphql */ `
 query Factsheets {
@@ -10,31 +11,10 @@ query Factsheets {
 }
 `
 
-exports.handler = withServerError(async (event, context) => {
+exports.handler = withServerError(async (_, __) => {
   const data = await datocmsRequest({ query })
 
-  const html = /* html */ `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Kaartenbak API</title>
-    </head>
-    <body>
-      <h1>Kaartenbak API</h1>
-      <h2>Factsheets</h2>
-      <ul>
-        ${data.allFactsheets.map(
-          (factsheet) => /* html */ `
-          <li>
-            <h3>${factsheet.title}</h3>
-            <a href="/api/factsheet?id=${factsheet.id}&format=html">HTML</a>
-            <a href="/api/factsheet?id=${factsheet.id}&format=json">JSON</a>
-          </li>`
-        )}
-      </ul>
-    </body>
-    </html>
-    `
+  const html = formatFactsheetOverviewHTML(data.allFactsheets)
 
   return {
     statusCode: 200,

@@ -82,7 +82,7 @@ const contentType = {
   json: 'application/json',
 }
 
-exports.handler = withServerError(async (event, context) => {
+exports.handler = withServerError(async (event, _) => {
   const { id, format } = event.queryStringParameters
 
   if (!id) {

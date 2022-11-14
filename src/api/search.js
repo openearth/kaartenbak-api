@@ -75,7 +75,7 @@ function findLayers(menu, query, foundLayers = []) {
   return foundLayers
 }
 
-exports.handler = withServerError(async (event, context) => {
+exports.handler = withServerError(async (event, _) => {
   const { viewer, query } = event.queryStringParameters
 
   if (!viewer) {

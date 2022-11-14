@@ -5,6 +5,7 @@ const {
 const { format: formatFactsheetXml } = require('../lib/format-factsheet-xml')
 const convert = require('xml-js')
 const fetch = require('node-fetch')
+const { withServerError } = require('../lib/with-server-error')
 
 const query = /* graphql */ `
 query LayerById($id: ItemId) {
@@ -81,9 +82,7 @@ const contentType = {
   json: 'application/json',
 }
 
-const url = '/records'
-
-exports.handler = async (event, context) => {
+exports.handler = withServerError(async (event, context) => {
   const { id, format } = event.queryStringParameters
 
   if (!id) {
@@ -110,64 +109,55 @@ exports.handler = async (event, context) => {
     }
   }
 
-  try {
-    const data = await datocmsRequest({ query, variables: { id } })
+  const data = await datocmsRequest({ query, variables: { id } })
 
-    const getCapabilitiesUrl = `${data.layer.url}?service=WMS&request=GetCapabilities`
+  const getCapabilitiesUrl = `${data.layer.url}?service=WMS&request=GetCapabilities`
 
-    const capabilitiesXml = await fetch(getCapabilitiesUrl).then((res) =>
-      res.text()
-    )
+  const capabilitiesXml = await fetch(getCapabilitiesUrl).then((res) =>
+    res.text()
+  )
 
-    const capabilities = JSON.parse(
-      convert.xml2json(capabilitiesXml, {
-        compact: true,
-      })
-    )
+  const capabilities = JSON.parse(
+    convert.xml2json(capabilitiesXml, {
+      compact: true,
+    })
+  )
 
-    const layerInfo = capabilities.WMS_Capabilities.Capability.Layer.Layer.find(
-      (layer) => layer.Name._text === data.layer.layer
-    )
+  const layerInfo = capabilities.WMS_Capabilities.Capability.Layer.Layer.find(
+    (layer) => layer.Name._text === data.layer.layer
+  )
 
-    let formatted
+  let formatted
 
-    if (data.layer.useFactsheetAsMetadata) {
-      const factsheet = data.layer.factsheets[0]
+  if (data.layer.useFactsheetAsMetadata) {
+    const factsheet = data.layer.factsheets[0]
 
-      formatted = formatFactsheetXml({
-        id,
-        layerInfo,
-        layer: data.layer,
-        factsheet: factsheet,
-      })
-    } else {
-
-      formatted = formatInspireMetadataXml({
-        id,
-        layerInfo,
-        layer: data.layer,
-      })
-    }
-
-    if (format === 'json') {
-      formatted = convert.xml2json(formatted, {
-        compact: true,
-      })
-    }
-
-    return {
-      statusCode: 200,
-      body: formatted,
-      headers: {
-        'content-type': contentType[format],
-        'Access-Control-Allow-Origin': '*',
-      },
-    }
-  } catch (error) {
-    console.log(error)
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Failed fetching data' }),
-    }
+    formatted = formatFactsheetXml({
+      id,
+      layerInfo,
+      layer: data.layer,
+      factsheet: factsheet,
+    })
+  } else {
+    formatted = formatInspireMetadataXml({
+      id,
+      layerInfo,
+      layer: data.layer,
+    })
   }
-}
+
+  if (format === 'json') {
+    formatted = convert.xml2json(formatted, {
+      compact: true,
+    })
+  }
+
+  return {
+    statusCode: 200,
+    body: formatted,
+    headers: {
+      'content-type': contentType[format],
+      'Access-Control-Allow-Origin': '*',
+    },
+  }
+})

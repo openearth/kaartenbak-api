@@ -1,4 +1,5 @@
 const { datocmsRequest } = require('../lib/datocms')
+const { withServerError } = require('../lib/with-server-error')
 
 const query = /* graphql */ `
 query Factsheets {
@@ -9,11 +10,10 @@ query Factsheets {
 }
 `
 
-exports.handler = async (event, context) => {
-  try {
-    const data = await datocmsRequest({ query })
+exports.handler = withServerError(async (event, context) => {
+  const data = await datocmsRequest({ query })
 
-    const html = /* html */ `
+  const html = /* html */ `
     <!DOCTYPE html>
     <html>
     <head>
@@ -36,19 +36,12 @@ exports.handler = async (event, context) => {
     </html>
     `
 
-    return {
-      statusCode: 200,
-      body: html,
-      headers: {
-        'content-type': 'text/html',
-        'Access-Control-Allow-Origin': '*',
-      },
-    }
-  } catch (error) {
-    console.log(error)
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Failed fetching data' }),
-    }
+  return {
+    statusCode: 200,
+    body: html,
+    headers: {
+      'content-type': 'text/html',
+      'Access-Control-Allow-Origin': '*',
+    },
   }
-}
+})

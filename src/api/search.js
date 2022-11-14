@@ -1,4 +1,5 @@
 const { datocmsRequest } = require('../lib/datocms')
+const { withServerError } = require('../lib/with-server-error')
 
 const datocmsQuery = /* graphql */ `
 query Layers ($first: IntType, $skip: IntType = 0) {
@@ -74,7 +75,7 @@ function findLayers(menu, query, foundLayers = []) {
   return foundLayers
 }
 
-exports.handler = async (event, context) => {
+exports.handler = withServerError(async (event, context) => {
   const { viewer, query } = event.queryStringParameters
 
   if (!viewer) {
@@ -91,35 +92,27 @@ exports.handler = async (event, context) => {
     }
   }
 
-  try {
-    const { menus } = await datocmsRequest({ query: datocmsQuery })
+  const { menus } = await datocmsRequest({ query: datocmsQuery })
 
-    buildChildrenTree(menus)
+  buildChildrenTree(menus)
 
-    const menu = menus.find((menu) => menu.name === viewer)
+  const menu = menus.find((menu) => menu.name === viewer)
 
-    if (!menu) {
-      return {
-        statusCode: 404,
-        body: 'Viewer not found',
-        'Access-Control-Allow-Origin': '*',
-      }
-    }
-
-    const lowerCaseQuery = query.toLowerCase()
-    const layers = findLayers(menu, lowerCaseQuery)
-
+  if (!menu) {
     return {
-      statusCode: 200,
-      body: JSON.stringify(layers),
+      statusCode: 404,
+      body: 'Viewer not found',
       'Access-Control-Allow-Origin': '*',
-      'content-type': 'application/json',
-    }
-  } catch (error) {
-    console.log(error)
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Failed fetching data' }),
     }
   }
-}
+
+  const lowerCaseQuery = query.toLowerCase()
+  const layers = findLayers(menu, lowerCaseQuery)
+
+  return {
+    statusCode: 200,
+    body: JSON.stringify(layers),
+    'Access-Control-Allow-Origin': '*',
+    'content-type': 'application/json',
+  }
+})

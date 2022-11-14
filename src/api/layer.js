@@ -5,6 +5,8 @@ const {
 const { format: formatFactsheetXml } = require('../lib/format-factsheet-xml')
 const convert = require('xml-js')
 const fetch = require('node-fetch')
+const { geonetworkRequest } = require('../lib/geonetwork')
+const FormData = require('form-data')
 
 const query = /* graphql */ `
 query LayerById($id: ItemId) {
@@ -81,6 +83,8 @@ const contentType = {
   json: 'application/json',
 }
 
+const url = '/records'
+
 exports.handler = async (event, context) => {
   const { id, format } = event.queryStringParameters
 
@@ -131,13 +135,13 @@ exports.handler = async (event, context) => {
 
     if (data.layer.useFactsheetAsMetadata) {
       const factsheet = data.layer.factsheets[0]
-      const factsheetId = 'factsheet-' + factsheet.id
-    
+      const factsheetId = 'factsheet-' + id
+
       formatted = formatFactsheetXml({
         id: factsheetId,
         layerInfo,
         layer: data.layer,
-        factsheet: factsheet
+        factsheet: factsheet,
       })
     } else {
       const layerId = 'layer-' + id
@@ -151,7 +155,7 @@ exports.handler = async (event, context) => {
 
     if (format === 'json') {
       formatted = convert.xml2json(formatted, {
-        compact: true
+        compact: true,
       })
     }
 

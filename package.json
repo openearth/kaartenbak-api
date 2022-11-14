@@ -8,6 +8,7 @@
   "dependencies": {
     "@datocms/cma-client-node": "^1.1.1",
     "@sindresorhus/slugify": "^2.1.1",
+    "form-data": "^4.0.0",
     "node-fetch": "^2.6.7",
     "ramda": "^0.28.0",
     "xml-js": "^1.6.11"

@@ -5,7 +5,8 @@ const {
 const { format: formatFactsheetXml } = require('../lib/format-factsheet-xml')
 const convert = require('xml-js')
 const fetch = require('node-fetch')
-const { withServerError } = require('../lib/with-server-error')
+const { withServerDefaults } = require('../lib/with-server-defaults')
+const { contentTypes } = require('../lib/constants')
 
 const query = /* graphql */ `
 query LayerById($id: ItemId) {
@@ -77,12 +78,7 @@ query LayerById($id: ItemId) {
 }
 `
 
-const contentType = {
-  xml: 'application/xml',
-  json: 'application/json',
-}
-
-exports.handler = withServerError(async (event, _) => {
+exports.handler = withServerDefaults(async (event, _) => {
   const { id, format } = event.queryStringParameters
 
   if (!id) {
@@ -153,11 +149,9 @@ exports.handler = withServerError(async (event, _) => {
   }
 
   return {
-    statusCode: 200,
     body: formatted,
     headers: {
-      'content-type': contentType[format],
-      'Access-Control-Allow-Origin': '*',
+      'content-type': contentTypes[format],
     },
   }
 })

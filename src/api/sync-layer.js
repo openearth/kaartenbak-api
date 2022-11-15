@@ -3,7 +3,7 @@ const { datocmsClient } = require('../lib/datocms')
 const { datocmsRequest } = require('../lib/datocms')
 const fetch = require('node-fetch')
 const { addThumbnailsToRecord } = require('../lib/add-thumbnails-to-record')
-const { withServerError } = require('../lib/with-server-error')
+const { withServerDefaults } = require('../lib/with-server-defaults')
 
 const url = '/records'
 
@@ -23,14 +23,10 @@ function fetchKaartenbakLayerXML(layerId) {
   ).then((res) => res.text())
 }
 
-exports.handler = withServerError(async (event, _) => {
+exports.handler = withServerDefaults(async (event, _) => {
   if (process.env.SYNC_LAYER_API_TOKEN !== event.headers['x-api-key']) {
     return {
       statusCode: 401,
-      headers: {
-        'content-type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
     }
   }
 
@@ -93,13 +89,5 @@ exports.handler = withServerError(async (event, _) => {
       })
 
       await addThumbnailsToRecord(thumbnails, id)
-  }
-
-  return {
-    statusCode: 200,
-    headers: {
-      'content-type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    },
   }
 })

@@ -1,5 +1,5 @@
 const { datocmsRequest } = require('../lib/datocms')
-const { withServerError } = require('../lib/with-server-error')
+const { withServerDefaults } = require('../lib/with-server-defaults')
 
 const datocmsQuery = /* graphql */ `
 query Layers ($first: IntType, $skip: IntType = 0) {
@@ -75,7 +75,7 @@ function findLayers(menu, query, foundLayers = []) {
   return foundLayers
 }
 
-exports.handler = withServerError(async (event, _) => {
+exports.handler = withServerDefaults(async (event, _) => {
   const { viewer, query } = event.queryStringParameters
 
   if (!viewer) {
@@ -101,8 +101,7 @@ exports.handler = withServerError(async (event, _) => {
   if (!menu) {
     return {
       statusCode: 404,
-      body: 'Viewer not found',
-      'Access-Control-Allow-Origin': '*',
+      body: JSON.stringify({ error: 'viewer not found' }),
     }
   }
 
@@ -110,9 +109,6 @@ exports.handler = withServerError(async (event, _) => {
   const layers = findLayers(menu, lowerCaseQuery)
 
   return {
-    statusCode: 200,
     body: JSON.stringify(layers),
-    'Access-Control-Allow-Origin': '*',
-    'content-type': 'application/json',
   }
 })

@@ -1,6 +1,7 @@
 const { datocmsRequest } = require('../lib/datocms')
 const { format: formatHtml } = require('../lib/format-html')
-const { withServerError } = require('../lib/with-server-error')
+const { withServerDefaults } = require('../lib/with-server-defaults')
+const { contentTypes } = require('../lib/constants')
 
 const query = /* graphql */ `
 query FactsheetById($id: ItemId) {
@@ -40,12 +41,7 @@ query FactsheetById($id: ItemId) {
 }
 `
 
-const contentType = {
-  html: 'text/html',
-  json: 'application/json',
-}
-
-exports.handler = withServerError(async (event, _) => {
+exports.handler = withServerDefaults(async (event, _) => {
   const { id, format } = event.queryStringParameters
 
   if (!id) {
@@ -86,11 +82,9 @@ exports.handler = withServerError(async (event, _) => {
   }
 
   return {
-    statusCode: 200,
     body: formatted,
     headers: {
-      'content-type': contentType[format],
-      'Access-Control-Allow-Origin': '*',
+      'content-type': contentTypes[format],
     },
   }
 })

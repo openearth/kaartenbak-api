@@ -17,9 +17,9 @@ query LayerById($id: ItemId) {
   }
 }`
 
-function fetchKaartenbakLayerXML(layerId) {
+function fetchLayerXML(layerId) {
   return fetch(
-    `https://kaartenbak.netlify.app/api/layer?id=${layerId}&format=xml`
+    process.env.API_URL + `/api/layer?id=${layerId}&format=xml`
   ).then((res) => res.text())
 }
 
@@ -34,7 +34,7 @@ exports.handler = withServerDefaults(async (event, _) => {
 
   switch (layerData.event_type) {
     case 'create': {
-      const xml = await fetchKaartenbakLayerXML(layerData.entity.id)
+      const xml = await fetchLayerXML(layerData.entity.id)
 
       const request = await geonetworkRequest({
         url,
@@ -53,7 +53,7 @@ exports.handler = withServerDefaults(async (event, _) => {
     }
 
     case 'publish': {
-      const xml = await fetchKaartenbakLayerXML(layerData.entity.id)
+      const xml = await fetchLayerXML(layerData.entity.id)
 
       await geonetworkRequest({
         url: url + '?uuidProcessing=OVERWRITE',

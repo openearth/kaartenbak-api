@@ -8,8 +8,8 @@ export const geonetworkRequest = async ({
   headers = {},
   body = {},
   options = {
-    responseText: false
-  }
+    responseText: false,
+  },
 }) => {
   // Do request to get X-XSRF-TOKEN and Cookie: see docs https://geonetwork-opensource.org/manuals/3.10.x/en/customizing-application/misc.html
   const me = await fetch(BASE_URL + '/me', {
@@ -45,5 +45,18 @@ export const geonetworkRequest = async ({
     }
 
     return res.json()
+  })
+}
+
+export const geonetworkRecordsRequest = (arg) => {
+  let url = '/records'
+
+  if (arg.url) {
+    url += arg.url
+  }
+
+  return geonetworkRequest({
+    ...arg,
+    url,
   })
 }

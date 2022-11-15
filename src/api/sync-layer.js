@@ -1,11 +1,9 @@
-const { geonetworkRequest } = require('../lib/geonetwork')
+const { geonetworkRecordsRequest } = require('../lib/geonetwork')
 const { datocmsClient } = require('../lib/datocms')
 const { datocmsRequest } = require('../lib/datocms')
 const fetch = require('node-fetch')
 const { addThumbnailsToRecord } = require('../lib/add-thumbnails-to-record')
 const { withServerDefaults } = require('../lib/with-server-defaults')
-
-const url = '/records'
 
 const query = /* graphql */ `
 query LayerById($id: ItemId) {
@@ -36,8 +34,7 @@ exports.handler = withServerDefaults(async (event, _) => {
     case 'create': {
       const xml = await fetchLayerXML(layerData.entity.id)
 
-      const request = await geonetworkRequest({
-        url,
+      const request = await geonetworkRecordsRequest({
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -55,8 +52,8 @@ exports.handler = withServerDefaults(async (event, _) => {
     case 'publish': {
       const xml = await fetchLayerXML(layerData.entity.id)
 
-      await geonetworkRequest({
-        url: url + '?uuidProcessing=OVERWRITE',
+      await geonetworkRecordsRequest({
+        url: '?uuidProcessing=OVERWRITE',
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -68,8 +65,8 @@ exports.handler = withServerDefaults(async (event, _) => {
     }
 
     case 'delete':
-      await geonetworkRequest({
-        url: url + `/${layerData.entity.attributes.geonetwerk_id}`,
+      await geonetworkRecordsRequest({
+        url: `/${layerData.entity.attributes.geonetwerk_id}`,
         method: 'DELETE',
       })
 

@@ -1,8 +1,6 @@
 const FormData = require('form-data')
-const { geonetworkRequest } = require('../lib/geonetwork')
+const { geonetworkRecordsRequest } = require('../lib/geonetwork')
 const fetch = require('node-fetch')
-
-const url = '/records'
 
 export async function addThumbnailsToRecord(thumbnails, recordId) {
   const formThumbnails = await Promise.all(
@@ -16,8 +14,8 @@ export async function addThumbnailsToRecord(thumbnails, recordId) {
     })
   )
 
-  const attachments = await geonetworkRequest({
-    url: url + `/${recordId}/attachments`,
+  const attachments = await geonetworkRecordsRequest({
+    url: `/${recordId}/attachments`,
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
@@ -25,10 +23,8 @@ export async function addThumbnailsToRecord(thumbnails, recordId) {
   })
 
   for (const attachment of attachments) {
-    await geonetworkRequest({
-      url:
-        url +
-        `/${attachment.metadataId}/processes/thumbnail-remove?thumbnail_url=${attachment.url}&process=thumbnail-remove&id=${attachment.metadataId}`,
+    await geonetworkRecordsRequest({
+      url: `/${attachment.metadataId}/processes/thumbnail-remove?thumbnail_url=${attachment.url}&process=thumbnail-remove&id=${attachment.metadataId}`,
       method: 'POST',
       options: {
         responseText: true,
@@ -36,8 +32,8 @@ export async function addThumbnailsToRecord(thumbnails, recordId) {
     })
   }
 
-  await geonetworkRequest({
-    url: url + `/${recordId}/attachments`,
+  await geonetworkRecordsRequest({
+    url: `/${recordId}/attachments`,
     method: 'DELETE',
     options: {
       responseText: true,
@@ -45,16 +41,14 @@ export async function addThumbnailsToRecord(thumbnails, recordId) {
   })
 
   for (const formThumbnail of formThumbnails) {
-    const attachment = await geonetworkRequest({
-      url: url + `/${recordId}/attachments`,
+    const attachment = await geonetworkRecordsRequest({
+      url: `/${recordId}/attachments`,
       method: 'POST',
       body: formThumbnail,
     })
 
-    await geonetworkRequest({
-      url:
-        url +
-        `/${attachment.metadataId}/processes/thumbnail-add?thumbnail_url=${attachment.url}&thumbnail_desc=&process=thumbnail-add&id=${attachment.metadataId}`,
+    await geonetworkRecordsRequest({
+      url: `/${attachment.metadataId}/processes/thumbnail-add?thumbnail_url=${attachment.url}&thumbnail_desc=&process=thumbnail-add&id=${attachment.metadataId}`,
       method: 'POST',
       headers: {
         accept: 'application/xml',

@@ -15,6 +15,7 @@ query LayerById($id: ItemId) {
     url
     layer
     useFactsheetAsMetadata
+    indexableWfsProperties
     inspireMetadata {
         _updatedAt
         citationTitle
@@ -122,6 +123,8 @@ exports.handler = withServerDefaults(async (event, _) => {
   const layerInfo = capabilities.WMS_Capabilities.Capability.Layer.Layer.find(
     (layer) => layer.Name._text === data.layer.layer
   )
+
+  console.log(layer.indexableWfsProperties)
 
   let formatted
 

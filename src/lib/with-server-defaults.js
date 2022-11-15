@@ -2,7 +2,7 @@ export function withServerDefaults(fn) {
   return async (...args) => {
     try {
       const response = await fn(...args)
-      
+
       return {
         statusCode: 200,
         ...response,
@@ -12,7 +12,7 @@ export function withServerDefaults(fn) {
           ...response?.headers,
         },
       }
-    } catch (e) {
+    } catch (error) {
       console.log(error)
       return {
         statusCode: 500,

@@ -1,4 +1,5 @@
-import { dateTypes } from './constants'
+const { dateTypes } = require('./constants')
+const { formatKeywords } = require('./format-keywords')
 
 export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
 <gmd:MD_Metadata xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:gmx="http://www.isotc211.org/2005/gmx" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" xsi:schemaLocation="http://www.isotc211.org/2005/gmd http://schemas.opengis.net/csw/2.0.2/profiles/apiso/1.0.0/apiso.xsd">
@@ -316,7 +317,7 @@ export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
   factsheet.soortDataset
 } - ${factsheet.kostenOpJaarbasis} - ${factsheet.soortenoverzicht} - ${
   factsheet.habitats
-}</gco:CharacterString>
+} - ${formatKeywords(layer.indexableWfsProperties)}</gco:CharacterString>
       </gmd:supplementalInformation>
     </gmd:MD_DataIdentification>
   </gmd:identificationInfo>

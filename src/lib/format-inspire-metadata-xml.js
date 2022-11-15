@@ -1,4 +1,5 @@
-import { dateTypes } from './constants';
+const { dateTypes } = require('./constants')
+const { formatKeywords } = require('./format-keywords')
 
 export const format = ({ id, layerInfo, layer }) => /* xml */ `
 <gmd:MD_Metadata xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:gmx="http://www.isotc211.org/2005/gmx" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" xsi:schemaLocation="http://www.isotc211.org/2005/gmd http://schemas.opengis.net/csw/2.0.2/profiles/apiso/1.0.0/apiso.xsd">
@@ -93,9 +94,7 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
       <gmd:citation>
         <gmd:CI_Citation>
           <gmd:title>
-            <gco:CharacterString>${
-              layer.name
-            }</gco:CharacterString>
+            <gco:CharacterString>${layer.name}</gco:CharacterString>
           </gmd:title>
           <gmd:date>
             <gmd:CI_Date>
@@ -106,9 +105,7 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
                 <gmd:CI_DateTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_DateTypeCode" codeListValue="${
                   layer.inspireMetadata.citationDateDatetype
                 }">
-                ${
-                  dateTypes[layer.inspireMetadata.citationDateDatetype]
-                }
+                ${dateTypes[layer.inspireMetadata.citationDateDatetype]}
               </gmd:CI_DateTypeCode>
               </gmd:dateType>
             </gmd:CI_Date>
@@ -128,7 +125,9 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
       </gmd:citation>
       <!-- TG Requirement C.9: metadata/2.0/req/common/resource-abstract: A non-empty brief narrative summary of the content of the described data set, data set series or service shall be provided. It shall be encoded using the gmd:abstract element with a Non-empty Free Text Element content in the language of the metadata. The multiplicity of this element is 1. -->
       <gmd:abstract>
-        <gco:CharacterString>${layer.inspireMetadata.abstract}</gco:CharacterString>
+        <gco:CharacterString>${
+          layer.inspireMetadata.abstract
+        }</gco:CharacterString>
       </gmd:abstract>
 
       <gmd:status>
@@ -250,7 +249,8 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
             <gmd:MD_RepresentativeFraction>
               <gmd:denominator>
                 <gco:Integer>${
-                  layer.inspireMetadata.spatialresolutionEquivalentscaleDenominator
+                  layer.inspireMetadata
+                    .spatialresolutionEquivalentscaleDenominator
                 }</gco:Integer>
               </gmd:denominator>
             </gmd:MD_RepresentativeFraction>
@@ -265,13 +265,15 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
         <gmd:LanguageCode codeList="http://www.loc.gov/standards/iso639-2/" codeListValue="dut">Dutch</gmd:LanguageCode>
       </gmd:language>
 
-      ${layer.inspireMetadata.topiccategories.map(category => `
+      ${layer.inspireMetadata.topiccategories
+        .map(
+          (category) => `
         <gmd:topicCategory>
-          <gmd:MD_TopicCategoryCode>${
-            category.title
-          }</gmd:MD_TopicCategoryCode>
+          <gmd:MD_TopicCategoryCode>${category.title}</gmd:MD_TopicCategoryCode>
         </gmd:topicCategory>
-      `).join('')}
+      `
+        )
+        .join('')}
 
       ${
         layerInfo
@@ -302,6 +304,11 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
       `
           : ''
       }
+      <gmd:supplementalInformation>
+        <gco:CharacterString>${formatKeywords(
+          layer.indexableWfsProperties
+        )}</gco:CharacterString>
+      </gmd:supplementalInformation>
     </gmd:MD_DataIdentification>
   </gmd:identificationInfo>
   ${

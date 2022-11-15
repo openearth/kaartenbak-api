@@ -124,8 +124,6 @@ exports.handler = withServerDefaults(async (event, _) => {
     (layer) => layer.Name._text === data.layer.layer
   )
 
-  console.log(layer.indexableWfsProperties)
-
   let formatted
 
   if (data.layer.useFactsheetAsMetadata) {

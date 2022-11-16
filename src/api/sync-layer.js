@@ -16,12 +16,19 @@ query LayerById($id: ItemId) {
 }`
 
 function fetchLayerXML(layerId) {
+  /* 
+    node-fetch doesn't allow relative urls,
+    so we use an absolute url here by using
+    an environment variable that refers
+    to the url of the API
+  */
   return fetch(
     process.env.API_URL + `/api/layer?id=${layerId}&format=xml`
   ).then((res) => res.text())
 }
 
 exports.handler = withServerDefaults(async (event, _) => {
+  /* Protect this endpoint by means of a token */
   if (process.env.SYNC_LAYER_API_TOKEN !== event.headers['x-api-key']) {
     return {
       statusCode: 401,

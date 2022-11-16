@@ -3,7 +3,7 @@ const { geonetworkRecordsRequest } = require('../lib/geonetwork')
 const fetch = require('node-fetch')
 
 export async function addThumbnailsToRecord(thumbnails, recordId) {
-  const formThumbnails = await Promise.all(
+  const forms = await Promise.all(
     thumbnails.map(async (thumbnail) => {
       const blob = await fetch(thumbnail.url).then((res) => res.blob())
       const arrayBuffer = await blob.arrayBuffer()
@@ -40,11 +40,11 @@ export async function addThumbnailsToRecord(thumbnails, recordId) {
     },
   })
 
-  for (const formThumbnail of formThumbnails) {
+  for (const form of forms) {
     const attachment = await geonetworkRecordsRequest({
       url: `/${recordId}/attachments`,
       method: 'POST',
-      body: formThumbnail,
+      body: form,
     })
 
     await geonetworkRecordsRequest({

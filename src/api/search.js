@@ -52,6 +52,7 @@ function layerMatches(key, indexableWfsProperties, name, description, query) {
   )
 }
 
+// Find layers recursively by matching them to the search query
 function findLayers(menu, query, foundLayers = []) {
   menu &&
     Object.keys(menu).forEach((key) => {

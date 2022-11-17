@@ -7,6 +7,7 @@ const convert = require('xml-js')
 const fetch = require('node-fetch')
 const { withServerDefaults } = require('../lib/with-server-defaults')
 const { contentTypes } = require('../lib/constants')
+const { formatKeywords } = require('../lib/format-keywords')
 
 const query = /* graphql */ `
 query LayerById($id: ItemId) {
@@ -125,7 +126,7 @@ exports.handler = withServerDefaults(async (event, _) => {
   )
 
   let formatted
-
+  
   if (data.layer.useFactsheetAsMetadata) {
     const factsheet = data.layer.factsheets[0]
 

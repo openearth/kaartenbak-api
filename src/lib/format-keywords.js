@@ -7,4 +7,6 @@ export function formatKeywords(indexableWfsProperties) {
       }, [])
       .join(' - ')
   }
+
+  return ''
 }

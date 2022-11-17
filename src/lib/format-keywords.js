@@ -1,6 +1,6 @@
 export function formatKeywords(indexableWfsProperties) {
   return indexableWfsProperties
-    .reduce((keywords, indexableWfsProperty) => {
+    ?.reduce((keywords, indexableWfsProperty) => {
       keywords.push(...indexableWfsProperty.keywords)
       return keywords
     }, [])

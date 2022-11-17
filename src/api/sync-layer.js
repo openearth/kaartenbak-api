@@ -37,8 +37,6 @@ exports.handler = withServerDefaults(async (event, _) => {
 
   const layerData = JSON.parse(event.body)
 
-  console.log(layerData.event_type)
-
   switch (layerData.event_type) {
     case 'create': {
       const xml = await fetchLayerXML(layerData.entity.id)

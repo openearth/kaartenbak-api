@@ -1,5 +1,6 @@
 const { dateTypes } = require('./constants')
 const { formatKeywords } = require('./format-keywords')
+const { formatSpatialRepresentationType } = require('./format-spatial-representation-type')
 
 export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
 <gmd:MD_Metadata xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:gmx="http://www.isotc211.org/2005/gmx" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" xsi:schemaLocation="http://www.isotc211.org/2005/gmd http://schemas.opengis.net/csw/2.0.2/profiles/apiso/1.0.0/apiso.xsd">
@@ -226,9 +227,7 @@ export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
         </gmd:MD_LegalConstraints>
       </gmd:resourceConstraints>
       <!-- TG Requirement 2.4: metadata/2.0/req/isdss/spatial-representation-type: The spatial representation type shall be given using element gmd:spatialRepresentationType/gmd:MD_SpatialRepresentationTypeCode referring to one of the values of ISO 19139 code list MD_SpatialRepresentationTypeCode and one of the code list values "vector", "grid", "tin" or “textTable”. Multiplicity of this element is 1..*. -->
-      <gmd:spatialRepresentationType>
-        <gmd:MD_SpatialRepresentationTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_SpatialRepresentationTypeCode" codeListValue="vector">Vector</gmd:MD_SpatialRepresentationTypeCode>
-      </gmd:spatialRepresentationType>
+      ${formatSpatialRepresentationType(layerInfo)}
       <!-- TG Requirement 1.5: metadata/2.0/req/datasets-and-series/spatial-resolution: Spatial resolution for data set or data set series shall be given using either equivalent scale or a resolution distance, provided that these have been specified for the described data sets. If both ways have been specified, only one of the ways shall be used.
       The spatial resolution as equivalent scale shall be encoded using gmd:spatialResolution/gmd:MD_Resolution/gmd:equivalentScale/gmd:MD_RepresentativeFraction/gmd:denominator/gco:Integer element.
       The spatial resolution as resolution distance shall be encoded using gmd:spatialResolution/gmd:MD_Resolution/gmd:distance/gco:Distance element.

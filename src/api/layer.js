@@ -7,7 +7,6 @@ const convert = require('xml-js')
 const fetch = require('node-fetch')
 const { withServerDefaults } = require('../lib/with-server-defaults')
 const { contentTypes } = require('../lib/constants')
-const { formatKeywords } = require('../lib/format-keywords')
 
 const query = /* graphql */ `
 query LayerById($id: ItemId) {
@@ -25,7 +24,7 @@ query LayerById($id: ItemId) {
         abstract
         identificationinfoStatus
         topiccategories {
-          title
+          topicCategoryItem
         }
         descriptivekeywordsKeywords {
           title
@@ -51,7 +50,7 @@ query LayerById($id: ItemId) {
       identificationinfoStatus
       doelWaarvoorDataWordenVerzameld
       onderwerp {
-        title
+        topicCategoryItem
       }
       naamUitvoerendeDienstOrganisatie
       rolContactpersoon
@@ -126,7 +125,7 @@ exports.handler = withServerDefaults(async (event, _) => {
   )
 
   let formatted
-  
+
   if (data.layer.useFactsheetAsMetadata) {
     const factsheet = data.layer.factsheets[0]
 

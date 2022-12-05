@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "dev": "netlify dev"
+    "dev": "netlify dev -p 8080",
+    "ngrok": "ngrok http 8080"
   },
   "devDependencies": {
     "netlify-cli": "^10.15.0"
@@ -9,6 +10,7 @@
     "@datocms/cma-client-node": "^1.1.1",
     "@sindresorhus/slugify": "^2.1.1",
     "form-data": "^4.0.0",
+    "ngrok": "^4.3.3",
     "node-fetch": "^2.6.7",
     "ramda": "^0.28.0",
     "xml-js": "^1.6.11"

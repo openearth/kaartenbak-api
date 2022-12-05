@@ -269,7 +269,7 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
         .map(
           (category) => `
         <gmd:topicCategory>
-          <gmd:MD_TopicCategoryCode>${category.title}</gmd:MD_TopicCategoryCode>
+          <gmd:MD_TopicCategoryCode>${category.topicCategoryItem}</gmd:MD_TopicCategoryCode>
         </gmd:topicCategory>
       `
         )

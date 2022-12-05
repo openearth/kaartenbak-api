@@ -111,17 +111,6 @@ export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
               </gmd:dateType>
             </gmd:CI_Date>
           </gmd:date>
-          <!-- TG Requirement 1.3: metadata/2.0/req/datasets-and-series/dataset-uid: A unique identifier shall be given for each described dataset or data sets series. This identifier shall be a URI consisting of a namespace uniquely identifying a naming context governed by an identifier authority, and a code unique within this namespace.
-  The identifying URI shall be encoded using gmd:citation/gmd:CI_Citation/gmd:identifier/*/gmd:code element with a Non-empty Free Text Element content.
-  The multiplicity of this element is 1..*. -->
-          <gmd:identifier>
-            <gmd:MD_Identifier>
-              <gmd:code>
-                <gmx:Anchor xlink:href="http://www.my-organisation.eu/so/lu/land-use-map">http://www.my-organisation.eu/so/lu/land-use-map</gmx:Anchor>
-                <!--  if the identifier is not an HTTP URI, the use of <gco:CharacterString> is also possible  -->
-              </gmd:code>
-            </gmd:MD_Identifier>
-          </gmd:identifier>
         </gmd:CI_Citation>
       </gmd:citation>
       <!-- TG Requirement C.9: metadata/2.0/req/common/resource-abstract: A non-empty brief narrative summary of the content of the described data set, data set series or service shall be provided. It shall be encoded using the gmd:abstract element with a Non-empty Free Text Element content in the language of the metadata. The multiplicity of this element is 1. -->

@@ -1,6 +1,7 @@
 const { dateTypes } = require('./constants')
 const { formatKeywords } = require('./format-keywords')
 const { formatSpatialRepresentationType } = require('./format-spatial-representation-type')
+const { formatLinks } = require('./format-links')
 
 export const format = ({ id, layerInfo, layer }) => /* xml */ `
 <gmd:MD_Metadata xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:gmx="http://www.isotc211.org/2005/gmx" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" xsi:schemaLocation="http://www.isotc211.org/2005/gmd http://schemas.opengis.net/csw/2.0.2/profiles/apiso/1.0.0/apiso.xsd">
@@ -299,9 +300,6 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
       </gmd:supplementalInformation>
     </gmd:MD_DataIdentification>
   </gmd:identificationInfo>
-  ${
-    layerInfo
-      ? /* xml */ `
   <gmd:distributionInfo>
     <gmd:MD_Distribution>
       <!-- TG Requirement 2.6: metadata/2.0/req/isdss/data-encoding: The encoding and the storage or transmission format of the provided data sets or data set series shall be given using the gmd:distributionFormat/gmd:MD_Format element.
@@ -324,43 +322,11 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
       The multiplicity of this element is 0..n. -->
       <gmd:transferOptions>
         <gmd:MD_DigitalTransferOptions>
-          <gmd:onLine>
-            <gmd:CI_OnlineResource>
-              <gmd:linkage>
-                <gmd:URL>${layer.url}${encodeURIComponent(
-          `?service=WMS&request=GetCapabilities&typeName=layer&query_layers=`
-        )}${layer.layer}</gmd:URL>
-              </gmd:linkage>
-              <gmd:protocol>
-                <gmx:Anchor xlink:href="http://www.opengis.net/def/serviceType/ogc/wms">
-                  OGC:WMS
-                </gmx:Anchor>
-              </gmd:protocol>
-              <gmd:applicationProfile>
-	              <gmx:Anchor xlink:href="http://inspire.ec.europa.eu/metadata-codelist/SpatialDataServiceType/view">Raadpleegdienst</gmx:Anchor>
-              </gmd:applicationProfile>
-              <gmd:name>
-                <gco:CharacterString>${
-                  layerInfo.Name._text
-                }</gco:CharacterString>
-              </gmd:name>
-              <gmd:description>
-                <gmx:Anchor xlink:href="http://inspire.ec.europa.eu/metadata-codelist/OnLineDescriptionCode/accessPoint">
-                  accessPoint
-                </gmx:Anchor>
-              </gmd:description>
-              <gmd:function>
-                <gmd:CI_OnLineFunctionCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_OnLineFunctionCode" codeListValue="download"/>
-              </gmd:function>
-            </gmd:CI_OnlineResource>
-          </gmd:onLine>
+          ${formatLinks(layer.links)}
         </gmd:MD_DigitalTransferOptions>
       </gmd:transferOptions>
     </gmd:MD_Distribution>
   </gmd:distributionInfo>  
-  `
-      : ''
-  }
   <!-- TG Requirement 1.9: metadata/2.0/req/datasets-and-series/one-data-quality-element: There shall be exactly one gmd:dataQualityInfo/gmd:DQ_DataQuality element scoped to the entire described data set or data set series. The scoping shall be encoded using gmd:scope/gmd:DQ_Scope/gmd:level/gmd:MD_ScopeCode element referring to value "dataset" or "series" of ISO 19139 code list MD_ScopeCode. -->
   <gmd:dataQualityInfo>
     <gmd:DQ_DataQuality>

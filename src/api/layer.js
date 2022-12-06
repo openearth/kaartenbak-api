@@ -75,6 +75,12 @@ query LayerById($id: ItemId) {
       soortenoverzicht
       habitats
     }
+    links {
+      protocol
+      url
+      name
+      description
+    }
   }
 }
 `

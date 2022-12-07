@@ -1,6 +1,8 @@
 const { dateTypes } = require('./constants')
 const { formatKeywords } = require('./format-keywords')
-const { formatSpatialRepresentationType } = require('./format-spatial-representation-type')
+const {
+  formatSpatialRepresentationType,
+} = require('./format-spatial-representation-type')
 const { formatLinks } = require('./format-links')
 
 export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
@@ -252,11 +254,11 @@ export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
         <gmd:LanguageCode codeList="http://www.loc.gov/standards/iso639-2/" codeListValue="dut">Dutch</gmd:LanguageCode>
       </gmd:language>
 
-      ${factsheet.onderwerp
-        .map(
-          (onderwerp) => `
+      ${factsheet.onderwerp[0]?.topicCategoryItem
+        ?.map(
+          (item) => `
         <gmd:topicCategory>
-          <gmd:MD_TopicCategoryCode>${onderwerp.topicCategoryItem}</gmd:MD_TopicCategoryCode>
+          <gmd:MD_TopicCategoryCode>${item}</gmd:MD_TopicCategoryCode>
         </gmd:topicCategory>
       `
         )

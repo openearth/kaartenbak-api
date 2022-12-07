@@ -1,6 +1,8 @@
 const { dateTypes } = require('./constants')
 const { formatKeywords } = require('./format-keywords')
-const { formatSpatialRepresentationType } = require('./format-spatial-representation-type')
+const {
+  formatSpatialRepresentationType,
+} = require('./format-spatial-representation-type')
 const { formatLinks } = require('./format-links')
 
 export const format = ({ id, layerInfo, layer }) => /* xml */ `
@@ -254,11 +256,11 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
         <gmd:LanguageCode codeList="http://www.loc.gov/standards/iso639-2/" codeListValue="dut">Dutch</gmd:LanguageCode>
       </gmd:language>
 
-      ${layer.inspireMetadata.topiccategories
+      ${layer.inspireMetadata.topiccategories[0]?.topicCategoryItem
         .map(
-          (category) => `
+          (item) => `
         <gmd:topicCategory>
-          <gmd:MD_TopicCategoryCode>${category.topicCategoryItem}</gmd:MD_TopicCategoryCode>
+          <gmd:MD_TopicCategoryCode>${item}</gmd:MD_TopicCategoryCode>
         </gmd:topicCategory>
       `
         )

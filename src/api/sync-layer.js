@@ -41,7 +41,7 @@ exports.handler = withServerDefaults(async (event, _) => {
     case 'create': {
       const xml = await fetchLayerXML(layerData.entity.id)
 
-      const request = await geonetworkRecordsRequest({
+      await geonetworkRecordsRequest({
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -50,7 +50,7 @@ exports.handler = withServerDefaults(async (event, _) => {
       })
 
       await datocmsClient.items.update(layerData.entity.id, {
-        geonetwerk_id: request.uuid,
+        metadata_url: `https://datahuiswadden.openearth.nl/geonetwork/srv/dut/catalog.search#/metadata/${layerData.entity.id}`,
       })
 
       break
@@ -73,8 +73,11 @@ exports.handler = withServerDefaults(async (event, _) => {
 
     case 'delete':
       await geonetworkRecordsRequest({
-        url: `/${layerData.entity.attributes.geonetwerk_id}`,
+        url: `/${layerData.entity.id}`,
         method: 'DELETE',
+        options: {
+          responseText: true,
+        },
       })
 
       break

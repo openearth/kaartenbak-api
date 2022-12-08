@@ -42,6 +42,7 @@ exports.handler = withServerDefaults(async (event, _) => {
       const xml = await fetchLayerXML(layerData.entity.id)
 
       await geonetworkRecordsRequest({
+        url: '?publishToAll=true',
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -60,7 +61,7 @@ exports.handler = withServerDefaults(async (event, _) => {
       const xml = await fetchLayerXML(layerData.entity.id)
 
       await geonetworkRecordsRequest({
-        url: '?uuidProcessing=OVERWRITE',
+        url: '?uuidProcessing=OVERWRITE&publishToAll=true',
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

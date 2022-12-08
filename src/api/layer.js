@@ -81,6 +81,11 @@ query LayerById($id: ItemId) {
       name
       description
     }
+    pointOfContactOrganisations {
+      organisationName
+      email
+      rol
+    }
   }
 }
 `

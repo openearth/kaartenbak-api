@@ -131,29 +131,33 @@ export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
       The gmd:CI_ResponsibleParty element shall contain the following child elements: The name of the organisation shall be given as the value of gmd:pointOfContact/gmd:CI_ResponsibleParty/gmd:organisationName element with a Non-empty Free Text Element content.
       The email address of the organisation shall be provided as the value of gmd:pointOfContact/gmd:CI_ResponsibleParty/gmd:contactInfo/gmd:CI_Contact/gmd:address/gmd:CI_Address/gmd:electronicMailAddress element with a Non-empty Free Text Element containing a functioning email address of the responsible party.
       The value of gmd:pointOfContact/gmd:CI_ResponsibleParty/gmd:role/gmd:CI_RoleCode shall point to the most relevant value of ISO 19139 code list CI_RoleCode. -->
+      ${layer.pointOfContactOrganisations
+        .map(
+          (item) => /* xml */ `
       <gmd:pointOfContact>
         <gmd:CI_ResponsibleParty>
           <gmd:organisationName>
-            <gco:CharacterString>${
-              factsheet.naamUitvoerendeDienstOrganisatie
-            }</gco:CharacterString>
+            <gco:CharacterString>${item.organisationName}</gco:CharacterString>
           </gmd:organisationName>
           <gmd:contactInfo>
             <gmd:CI_Contact>
               <gmd:address>
                 <gmd:CI_Address>
                   <gmd:electronicMailAddress>
-                    <gco:CharacterString>deltaresdata@deltares.nl</gco:CharacterString>
+                    <gco:CharacterString>${item.email}</gco:CharacterString>
                   </gmd:electronicMailAddress>
                 </gmd:CI_Address>
               </gmd:address>
             </gmd:CI_Contact>
           </gmd:contactInfo>
-          <!-- <gmd:role>
-            <gmd:CI_RoleCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_RoleCode" codeListValue="owner" />
-          </gmd:role> -->
+          <gmd:role>
+            <gmd:CI_RoleCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_RoleCode" codeListValue="${item.rol}" />
+          </gmd:role>
         </gmd:CI_ResponsibleParty>
       </gmd:pointOfContact>
+      `
+        )
+        .join(' ')}
       <!-- TG Requirement C.15: metadata/2.0/req/common/keyword-originating-cv: When using keywords originating from a controlled vocabulary, the originating controlled vocabulary shall be cited using gmd:descriptiveKeywords/gmd:MD_Keywords/gmd:thesaurusName/gmd:CI_Citation element.
       The title of the vocabulary shall be given using gmd:title element with a Non-empty Free Text Element content.
       The publication date of the vocabulary shall be given using the gmd:date/gmd:CI_Date/gmd:date/gco:Date and gmd:dateType/gmd:CI_DateTypeCode elements. -->

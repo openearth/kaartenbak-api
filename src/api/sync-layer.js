@@ -60,9 +60,7 @@ exports.handler = withServerDefaults(async (event, _) => {
     case 'publish': {
       const xml = await fetchLayerXML(layerData.entity.id)
 
-      console.log(xml)
-
-      const request = await geonetworkRecordsRequest({
+      await geonetworkRecordsRequest({
         url: '?uuidProcessing=OVERWRITE&publishToAll=true',
         method: 'PUT',
         headers: {
@@ -70,8 +68,6 @@ exports.handler = withServerDefaults(async (event, _) => {
         },
         body: xml,
       })
-
-      console.log(request)
 
       break
     }

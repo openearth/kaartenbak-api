@@ -239,17 +239,22 @@ export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
       The spatial resolution as equivalent scale shall be encoded using gmd:spatialResolution/gmd:MD_Resolution/gmd:equivalentScale/gmd:MD_RepresentativeFraction/gmd:denominator/gco:Integer element.
       The spatial resolution as resolution distance shall be encoded using gmd:spatialResolution/gmd:MD_Resolution/gmd:distance/gco:Distance element.
       The multiplicity of this element is 0..n. -->
-      <gmd:spatialResolution>
-        <gmd:MD_Resolution>
-          <gmd:equivalentScale>
-            <gmd:MD_RepresentativeFraction>
-              <gmd:denominator>
-                <gco:Integer>${factsheet.toepassingsschaal}</gco:Integer>
-              </gmd:denominator>
-            </gmd:MD_RepresentativeFraction>
-          </gmd:equivalentScale>
-        </gmd:MD_Resolution>
-      </gmd:spatialResolution>
+      ${
+        factsheet?.toepassingsschaal
+          ? /* xml */ `
+        <gmd:spatialResolution>
+          <gmd:MD_Resolution>
+            <gmd:equivalentScale>
+              <gmd:MD_RepresentativeFraction>
+                <gmd:denominator>
+                  <gco:Integer>${factsheet.toepassingsschaal}</gco:Integer>
+                </gmd:denominator>
+              </gmd:MD_RepresentativeFraction>
+            </gmd:equivalentScale>
+          </gmd:MD_Resolution>
+        </gmd:spatialResolution>`
+          : ''
+      }
 
       <!-- TG Requirement 1.6: metadata/2.0/req/datasets-and-series/resource-language: For data sets or data set series containing textual information, the language(s) used in the resource shall be given. The language(s) used shall be encoded using one or more gmd:language/gmd:LanguageCode elements pointing to one of the three-letter language codes of the ISO 639-2/B code list.
       The multiplicity of the gmd:language element is 1..*.

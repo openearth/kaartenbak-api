@@ -69,10 +69,6 @@ exports.handler = withServerDefaults(async (event, _) => {
         body: xml,
       })
 
-      await datocmsClient.items.update(layerData.entity.id, {
-        metadata_url: `https://datahuiswadden.openearth.nl/geonetwork/srv/dut/catalog.search#/metadata/${layerData.entity.id}`,
-      })
-
       break
     }
 

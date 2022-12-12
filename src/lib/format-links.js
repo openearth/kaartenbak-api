@@ -1,3 +1,5 @@
+const xmlEscape = require('xml-escape')
+
 export function formatLinks(links) {
   if (!links?.length) {
     return ''
@@ -8,7 +10,7 @@ export function formatLinks(links) {
     <gmd:onLine>
       <gmd:CI_OnlineResource>
         <gmd:linkage>
-          <gmd:URL>${link.url}</gmd:URL>
+          <gmd:URL>${xmlEscape(link.url)}</gmd:URL>
         </gmd:linkage>
         <gmd:protocol>
         <gco:CharacterString>${link.protocol}</gco:CharacterString>

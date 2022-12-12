@@ -4,6 +4,7 @@ const {
   formatSpatialRepresentationType,
 } = require('./format-spatial-representation-type')
 const { formatLinks } = require('./format-links')
+const xmlEscape = require('xml-escape')
 
 export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
 <gmd:MD_Metadata xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:gmx="http://www.isotc211.org/2005/gmx" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" xsi:schemaLocation="http://www.isotc211.org/2005/gmd http://schemas.opengis.net/csw/2.0.2/profiles/apiso/1.0.0/apiso.xsd">
@@ -303,9 +304,11 @@ export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
           : ''
       }
       <gmd:supplementalInformation>
-        <gco:CharacterString>${factsheet.titelNaamMeetMonitorprogramma} - ${
-  encodeURIComponent(factsheet.urlOriginalFile)
-} - ${factsheet.naamAansturendeOrganisatie} - ${factsheet.datumVoltooiing} - ${
+        <gco:CharacterString>${
+          factsheet.titelNaamMeetMonitorprogramma
+        } - ${xmlEscape(factsheet.urlOriginalFile)} - ${
+  factsheet.naamAansturendeOrganisatie
+} - ${factsheet.datumVoltooiing} - ${
   factsheet.doelWaarvoorDataWordenVerzameld
 } - ${factsheet.rolContactpersoon} - ${factsheet.geografischGebied} - ${
   factsheet.overigeBeperkingenInGebruik

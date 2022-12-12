@@ -304,7 +304,7 @@ export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
       }
       <gmd:supplementalInformation>
         <gco:CharacterString>${factsheet.titelNaamMeetMonitorprogramma} - ${
-  encodeURI(factsheet.urlOriginalFile)
+  encodeURIComponent(factsheet.urlOriginalFile)
 } - ${factsheet.naamAansturendeOrganisatie} - ${factsheet.datumVoltooiing} - ${
   factsheet.doelWaarvoorDataWordenVerzameld
 } - ${factsheet.rolContactpersoon} - ${factsheet.geografischGebied} - ${

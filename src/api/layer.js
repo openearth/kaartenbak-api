@@ -7,6 +7,7 @@ const convert = require('xml-js')
 const fetch = require('node-fetch')
 const { withServerDefaults } = require('../lib/with-server-defaults')
 const { contentTypes } = require('../lib/constants')
+const https = require('https');
 
 const query = /* graphql */ `
 query LayerById($id: ItemId) {
@@ -121,7 +122,13 @@ exports.handler = withServerDefaults(async (event, _) => {
 
   const getCapabilitiesUrl = `${data.layer.url}?service=WMS&request=GetCapabilities`
 
-  const capabilitiesXml = await fetch(getCapabilitiesUrl).then((res) =>
+  const httpsAgent = new https.Agent({
+    rejectUnauthorized: false,
+  });
+
+  const capabilitiesXml = await fetch(getCapabilitiesUrl, {
+    agent: httpsAgent
+  }).then((res) =>
     res.text()
   )
 

@@ -54,8 +54,6 @@ exports.handler = withServerDefaults(async (event, _) => {
 
   const menuTree = buildMenuTree(menus)
 
-  console.log(menuTree)
-
   const geonetworkInstances = findGeonetworkInstances(menuTree, layerData)
 
   console.log(geonetworkInstances)
@@ -65,11 +63,15 @@ exports.handler = withServerDefaults(async (event, _) => {
   Array.from(geonetworkInstances).forEach(async ([_, geonetworkInstance]) => {
     const { baseUrl, username, password } = geonetworkInstance
 
+    console.log("before geonetwork instantation")
+
     const geonetwork = new Geonetwork(
       baseUrl + 'geonetwork/srv/api',
       username,
       password
     )
+
+    console.log("after geonetwork instantation")
 
     switch (layerData.event_type) {
       case 'create': {

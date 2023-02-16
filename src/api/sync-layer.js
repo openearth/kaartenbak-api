@@ -96,9 +96,13 @@ exports.handler = withServerDefaults(async (event, _) => {
       }
 
       case 'publish': {
+        console.log("in publish")
+
         if (!xml) {
           xml = await fetchLayerXML({ id: layerData.entity.id })
         }
+
+        console.log("after fetchLayerXML")
 
         await geonetwork.recordsRequest({
           url: '?uuidProcessing=OVERWRITE&publishToAll=true',

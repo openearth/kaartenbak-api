@@ -58,6 +58,8 @@ exports.handler = withServerDefaults(async (event, _) => {
 
   console.log(geonetworkInstances)
 
+  console.log(process.version)
+
   let xml
 
   Array.from(geonetworkInstances).forEach(async ([_, geonetworkInstance]) => {

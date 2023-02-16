@@ -1,6 +1,6 @@
 const xmlEscape = require('xml-escape')
 
-export function formatLinks(links) {
+function formatLinks(links) {
   if (!links?.length) {
     return ''
   }
@@ -25,4 +25,8 @@ export function formatLinks(links) {
     </gmd:onLine>
     `
   ).join('')
+}
+
+module.exports = {
+  formatLinks
 }

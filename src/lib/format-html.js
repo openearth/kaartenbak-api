@@ -1,4 +1,4 @@
-export const format = (item) => /* html */ `
+const format = (item) => /* html */ `
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -139,3 +139,7 @@ export const format = (item) => /* html */ `
 
 </html>
 `
+
+module.exports = {
+  format
+}

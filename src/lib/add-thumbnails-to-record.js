@@ -1,8 +1,7 @@
 const FormData = require('form-data')
-const { geonetworkRecordsRequest } = require('../lib/geonetwork')
 const fetch = require('node-fetch')
 
-export async function addThumbnailsToRecord(thumbnails, recordId) {
+async function addThumbnailsToRecord(thumbnails, recordId, geonetwork) {
   const forms = await Promise.all(
     thumbnails.map(async (thumbnail) => {
       const blob = await fetch(thumbnail.url).then((res) => res.blob())
@@ -14,7 +13,7 @@ export async function addThumbnailsToRecord(thumbnails, recordId) {
     })
   )
 
-  const attachments = await geonetworkRecordsRequest({
+  const attachments = await geonetwork.recordsRequest({
     url: `/${recordId}/attachments`,
     method: 'GET',
     headers: {
@@ -23,7 +22,7 @@ export async function addThumbnailsToRecord(thumbnails, recordId) {
   })
 
   for (const attachment of attachments) {
-    await geonetworkRecordsRequest({
+    await geonetwork.recordsRequest({
       url: `/${attachment.metadataId}/processes/thumbnail-remove?thumbnail_url=${attachment.url}&process=thumbnail-remove&id=${attachment.metadataId}`,
       method: 'POST',
       options: {
@@ -32,7 +31,7 @@ export async function addThumbnailsToRecord(thumbnails, recordId) {
     })
   }
 
-  await geonetworkRecordsRequest({
+  await geonetwork.recordsRequest({
     url: `/${recordId}/attachments`,
     method: 'DELETE',
     options: {
@@ -41,13 +40,18 @@ export async function addThumbnailsToRecord(thumbnails, recordId) {
   })
 
   for (const form of forms) {
-    const attachment = await geonetworkRecordsRequest({
+    const attachment = await geonetwork.recordsRequest({
       url: `/${recordId}/attachments`,
       method: 'POST',
+      options: {
+        responseText: false,
+      },
       body: form,
     })
 
-    await geonetworkRecordsRequest({
+    console.log(attachment)
+
+    await geonetwork.recordsRequest({
       url: `/${attachment.metadataId}/processes/thumbnail-add?thumbnail_url=${attachment.url}&thumbnail_desc=&process=thumbnail-add&id=${attachment.metadataId}`,
       method: 'POST',
       headers: {
@@ -59,4 +63,8 @@ export async function addThumbnailsToRecord(thumbnails, recordId) {
       },
     })
   }
+}
+
+module.exports = {
+  addThumbnailsToRecord
 }

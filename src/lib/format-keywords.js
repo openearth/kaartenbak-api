@@ -1,4 +1,4 @@
-export function formatKeywords(indexableWfsProperties) {
+function formatKeywords(indexableWfsProperties) {
   if (indexableWfsProperties) {
     return indexableWfsProperties
       .reduce((keywords, indexableWfsProperty) => {
@@ -9,4 +9,8 @@ export function formatKeywords(indexableWfsProperties) {
   }
 
   return ''
+}
+
+module.exports = {
+  formatKeywords
 }

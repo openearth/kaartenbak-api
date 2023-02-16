@@ -1,5 +1,6 @@
 const { datocmsRequest } = require('../lib/datocms')
 const { withServerDefaults } = require('../lib/with-server-defaults')
+const { buildChildrenTree } = require('../lib/build-children-tree')
 
 const datocmsQuery = /* graphql */ `
 query Layers ($first: IntType, $skip: IntType = 0) {
@@ -21,18 +22,6 @@ query Layers ($first: IntType, $skip: IntType = 0) {
   }
 }
 `
-
-function buildChildrenTree(items) {
-  items.forEach((item) => {
-    if (item.parent) {
-      const parent = items.find((p) => p.id === item.parent.id)
-      if (parent.children == null) {
-        parent.children = []
-      }
-      parent.children.push(item)
-    }
-  })
-}
 
 function isMatchCaseInsensitive(value, search) {
   return value?.toLowerCase().indexOf(search) > -1

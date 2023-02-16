@@ -1,4 +1,4 @@
-export function formatSpatialRepresentationType(layerInfo) {
+function formatSpatialRepresentationType(layerInfo) {
   const keyword = layerInfo?.KeywordList?.Keyword[0]?._text?.toLowerCase()
 
   let representationType
@@ -25,4 +25,8 @@ export function formatSpatialRepresentationType(layerInfo) {
   return /* xml */ `<gmd:spatialRepresentationType>
   <gmd:MD_SpatialRepresentationTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_SpatialRepresentationTypeCode" codeListValue="${representationType.value}">${representationType.type}</gmd:MD_SpatialRepresentationTypeCode>
 </gmd:spatialRepresentationType>`
+}
+
+module.exports = {
+  formatSpatialRepresentationType
 }

@@ -1,11 +1,16 @@
-export const dateTypes = {
+const dateTypes = {
   creation: 'Creation',
   publication: 'Publication',
   revision: 'Revision',
 }
 
-export const contentTypes = {
+const contentTypes = {
   xml: 'application/xml',
   json: 'application/json',
   html: 'text/html',
+}
+
+module.exports = {
+  dateTypes,
+  contentTypes
 }

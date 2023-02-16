@@ -1,11 +1,34 @@
-const { geonetworkRecordsRequest } = require('../lib/geonetwork')
+const { Geonetwork } = require('../lib/geonetwork')
 const { datocmsClient } = require('../lib/datocms')
 const { datocmsRequest } = require('../lib/datocms')
 const fetch = require('node-fetch')
 const { addThumbnailsToRecord } = require('../lib/add-thumbnails-to-record')
 const { withServerDefaults } = require('../lib/with-server-defaults')
+const { buildMenuTree } = require('../lib/build-menu-tree')
+const { findGeonetworkInstances } = require('../lib/find-geonetwork-instances')
 
-const query = /* graphql */ `
+const viewersWithLayersQuery = /* graphql */ `
+query viewersWithLayers ($first: IntType, $skip: IntType = 0) {
+  menus: allMenus(first: $first, skip: $skip) {
+    id
+    geonetwork {
+      baseUrl
+      username
+      password
+    }
+    children: layers {
+      id
+    }
+    parent {
+      id
+    }
+  }
+  _allMenusMeta {
+    count
+  }
+}`
+
+const layerByIdQuery = /* graphql */ `
 query LayerById($id: ItemId) {
   layer(filter: {id: {eq: $id}}) {
     thumbnails {
@@ -28,7 +51,7 @@ function fetchLayerXML(layerId) {
 }
 
 exports.handler = withServerDefaults(async (event, _) => {
-  /* Protect this endpoint by means of a token */
+  /* Protect this endpoint by using a token */
   if (process.env.SYNC_LAYER_API_TOKEN !== event.headers['x-api-key']) {
     return {
       statusCode: 401,
@@ -37,65 +60,91 @@ exports.handler = withServerDefaults(async (event, _) => {
 
   const layerData = JSON.parse(event.body)
 
-  switch (layerData.event_type) {
-    case 'create': {
-      const xml = await fetchLayerXML(layerData.entity.id)
+  const { menus } = await datocmsRequest({
+    query: viewersWithLayersQuery,
+  })
 
-      await geonetworkRecordsRequest({
-        url: '?publishToAll=true',
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: xml,
-      })
+  const menuTree = buildMenuTree(menus)
 
-      await datocmsClient.items.update(layerData.entity.id, {
-        metadata_url: `https://datahuiswadden.openearth.nl/geonetwork/srv/dut/catalog.search#/metadata/${layerData.entity.id}`,
-      })
+  const geonetworkInstances = findGeonetworkInstances(menuTree, layerData)
 
-      break
+  let xml;
+
+  Array.from(geonetworkInstances).forEach(async ([_, geonetworkInstance]) => {
+    const { baseUrl, username, password } = geonetworkInstance
+
+    const geonetwork = new Geonetwork(
+      baseUrl + 'geonetwork/srv/api',
+      username,
+      password
+    )
+
+    switch (layerData.event_type) {
+      case 'create': {
+        if (!xml) {
+          xml = await fetchLayerXML(layerData.entity.id)
+        }
+
+        await geonetwork.recordsRequest({
+          url: '?publishToAll=true',
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: xml,
+        })
+
+        await datocmsClient.items.update(layerData.entity.id, {
+          metadata_url: `https://datahuiswadden.openearth.nl/geonetwork/srv/dut/catalog.search#/metadata/${layerData.entity.id}`,
+        })
+
+        break
+      }
+
+      case 'publish': {
+        if (!xml) {
+          xml = await fetchLayerXML(layerData.entity.id)
+        }
+
+        await geonetwork.recordsRequest({
+          url: '?uuidProcessing=OVERWRITE&publishToAll=true',
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: xml,
+        })
+
+        break
+      }
+
+      case 'delete':
+        await geonetwork.recordsRequest({
+          url: `/${layerData.entity.id}`,
+          method: 'DELETE',
+          options: {
+            responseText: true,
+          },
+        })
+
+        break
     }
 
-    case 'publish': {
-      const xml = await fetchLayerXML(layerData.entity.id)
+    switch (layerData.event_type) {
+      case 'create':
+      case 'publish':
+        const id = layerData.entity.id
 
-      await geonetworkRecordsRequest({
-        url: '?uuidProcessing=OVERWRITE&publishToAll=true',
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: xml,
-      })
+        const {
+          layer: { thumbnails },
+        } = await datocmsRequest({
+          query: layerByIdQuery,
+          variables: { id },
+        })
 
-      break
+        console.log(layerData.event_type)
+
+        await addThumbnailsToRecord(thumbnails, id, geonetwork)
     }
-
-    case 'delete':
-      await geonetworkRecordsRequest({
-        url: `/${layerData.entity.id}`,
-        method: 'DELETE',
-        options: {
-          responseText: true,
-        },
-      })
-
-      break
-  }
-
-  switch (layerData.event_type) {
-    case 'create':
-    case 'publish':
-      const id = layerData.entity.id
-
-      const {
-        layer: { thumbnails },
-      } = await datocmsRequest({
-        query,
-        variables: { id },
-      })
-
-      await addThumbnailsToRecord(thumbnails, id)
-  }
+  })
 })

@@ -48,6 +48,8 @@ exports.handler = withServerDefaults(async (event, _) => {
 
   const layerData = JSON.parse(event.body)
 
+  console.log(await fetchLayerXML({ id: layerData.entity.id }))
+
   const { menus } = await datocmsRequest({
     query: viewersWithLayersQuery,
   })

@@ -52,15 +52,13 @@ exports.handler = withServerDefaults(async (event, _) => {
     query: viewersWithLayersQuery,
   })
 
-  console.log("xml", await fetchLayerXML({ id: layerData.entity.id }))
+  console.log("xml", )
 
   const menuTree = buildMenuTree(menus)
 
   const geonetworkInstances = findGeonetworkInstances(menuTree, layerData)
 
-  console.log(geonetworkInstances)
-
-  let xml
+  const xml = await fetchLayerXML({ id: layerData.entity.id })
 
   Array.from(geonetworkInstances).forEach(async ([_, geonetworkInstance]) => {
     const { baseUrl, username, password } = geonetworkInstance
@@ -73,10 +71,6 @@ exports.handler = withServerDefaults(async (event, _) => {
 
     switch (layerData.event_type) {
       case 'create': {
-        if (!xml) {
-          xml = await fetchLayerXML({ id: layerData.entity.id })
-        }
-
         await geonetwork.recordsRequest({
           url: '?publishToAll=true',
           method: 'PUT',
@@ -94,10 +88,6 @@ exports.handler = withServerDefaults(async (event, _) => {
       }
 
       case 'publish': {
-        if (!xml) {
-          xml = await fetchLayerXML({ id: layerData.entity.id })
-        }
-
         await geonetwork.recordsRequest({
           url: '?uuidProcessing=OVERWRITE&publishToAll=true',
           method: 'PUT',

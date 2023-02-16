@@ -58,14 +58,10 @@ exports.handler = withServerDefaults(async (event, _) => {
 
   console.log(geonetworkInstances)
 
-  console.log(process.version)
-
   let xml
 
   Array.from(geonetworkInstances).forEach(async ([_, geonetworkInstance]) => {
     const { baseUrl, username, password } = geonetworkInstance
-
-    console.log("before geonetwork instantation")
 
     const geonetwork = new Geonetwork(
       baseUrl + 'geonetwork/srv/api',
@@ -73,7 +69,9 @@ exports.handler = withServerDefaults(async (event, _) => {
       password
     )
 
-    console.log("after geonetwork instantation")
+    console.log("before geonetwork records request")
+
+    console.log(layerData.event_type)
 
     switch (layerData.event_type) {
       case 'create': {
@@ -114,6 +112,8 @@ exports.handler = withServerDefaults(async (event, _) => {
         break
       }
     }
+
+    console.log("after geonetwork records request")
 
     switch (layerData.event_type) {
       case 'create':

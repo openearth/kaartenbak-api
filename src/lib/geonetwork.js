@@ -47,10 +47,18 @@ class Geonetwork {
       },
     }).then(async (res) => {
       if (options.responseText) {
-        return res.text()
+        const text = res.text()
+
+        console.log(text)
+
+        return text
       }
 
-      return res.json()
+      const json = res.json()
+
+      console.log(json)
+
+      return json
     })
   }
 

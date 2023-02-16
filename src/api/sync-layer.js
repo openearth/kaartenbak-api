@@ -54,7 +54,11 @@ exports.handler = withServerDefaults(async (event, _) => {
 
   const menuTree = buildMenuTree(menus)
 
+  console.log(menuTree)
+
   const geonetworkInstances = findGeonetworkInstances(menuTree, layerData)
+
+  console.log(geonetworkInstances)
 
   let xml
 

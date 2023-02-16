@@ -1,95 +1,7 @@
-const { datocmsRequest } = require('../lib/datocms')
-const {
-  format: formatInspireMetadataXml,
-} = require('../lib/format-inspire-metadata-xml')
-const { format: formatFactsheetXml } = require('../lib/format-factsheet-xml')
 const convert = require('xml-js')
-const fetch = require('node-fetch')
 const { withServerDefaults } = require('../lib/with-server-defaults')
 const { contentTypes } = require('../lib/constants')
-const https = require('https');
-
-const query = /* graphql */ `
-query LayerById($id: ItemId) {
-  layer(filter: {id: {eq: $id}}) {
-    name
-    url
-    layer
-    useFactsheetAsMetadata
-    indexableWfsProperties
-    inspireMetadata {
-        _updatedAt
-        citationTitle
-        citationDateDate
-        citationDateDatetype
-        abstract
-        identificationinfoStatus
-        topiccategories {
-          topicCategoryItem
-        }
-        descriptivekeywordsKeywords {
-          title
-        }
-        resourceconstraintsUselimitation
-        resourceconstraintsAccessconstraints
-        spatialresolutionEquivalentscaleDenominator
-        referencesystemidentifierCode
-        hierarchylevel
-        lineageStatement
-      }
-    factsheets {
-      _updatedAt
-      id
-      title
-      titelNaamMeetMonitorprogramma
-      urlOriginalFile
-      naamAansturendeOrganisatie
-      datumVoltooiing
-      datumVanDeBron
-      datumtypeVanDeBron
-      samenvatting
-      identificationinfoStatus
-      doelWaarvoorDataWordenVerzameld
-      onderwerp {
-        topicCategoryItem
-      }
-      naamUitvoerendeDienstOrganisatie
-      rolContactpersoon
-      geografischGebied
-      toepassingsschaal
-      gebruiksbeperkingen
-      overigeBeperkingenInGebruik
-      themas {
-        title
-      }
-      temporeleDekking
-      hierarchieniveau
-      volledigheid
-      nauwkeurigheid
-      algemeneBeschrijvingVanHerkomst
-      inwinningsmethode
-      beschrijvingUitgevoerdeBewerkingen
-      meetvariabelen
-      meetmethodiek
-      soortDataset
-      kostenOpJaarbasis
-      soortenoverzicht
-      habitats
-    }
-    links {
-      protocol
-      url
-      name
-      description
-    }
-    pointOfContactOrganisations {
-      organisationName
-      email
-      rol
-    }
-  }
-}
-`
+const { fetchLayerXML } = require('../lib/fetch-layer-xml')
 
 exports.handler = withServerDefaults(async (event, _) => {
   const { id, format } = event.queryStringParameters
@@ -118,48 +30,9 @@ exports.handler = withServerDefaults(async (event, _) => {
     }
   }
 
-  const data = await datocmsRequest({ query, variables: { id } })
-
-  const getCapabilitiesUrl = `${data.layer.url}?service=WMS&request=GetCapabilities`
-
-  const httpsAgent = new https.Agent({
-    rejectUnauthorized: false,
-  });
-
-  const capabilitiesXml = await fetch(getCapabilitiesUrl, {
-    agent: httpsAgent
-  }).then((res) =>
-    res.text()
-  )
-
-  const capabilities = JSON.parse(
-    convert.xml2json(capabilitiesXml, {
-      compact: true,
-    })
-  )
-
-  const layerInfo = capabilities.WMS_Capabilities.Capability.Layer.Layer.find(
-    (layer) => layer.Name._text === data.layer.layer
-  )
-
-  let formatted
-
-  if (data.layer.useFactsheetAsMetadata) {
-    const factsheet = data.layer.factsheets[0]
-
-    formatted = formatFactsheetXml({
-      id,
-      layerInfo,
-      layer: data.layer,
-      factsheet: factsheet,
-    })
-  } else {
-    formatted = formatInspireMetadataXml({
-      id,
-      layerInfo,
-      layer: data.layer,
-    })
-  }
+  let formatted = await fetchLayerXML({
+    id,
+  })
 
   if (format === 'json') {
     formatted = convert.xml2json(formatted, {

@@ -28,5 +28,5 @@ function formatSpatialRepresentationType(layerInfo) {
 }
 
 module.exports = {
-  formatSpatialRepresentationType
+  formatSpatialRepresentationType,
 }

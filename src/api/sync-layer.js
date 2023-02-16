@@ -1,11 +1,11 @@
 const { Geonetwork } = require('../lib/geonetwork')
 const { datocmsClient } = require('../lib/datocms')
 const { datocmsRequest } = require('../lib/datocms')
-const fetch = require('node-fetch')
 const { addThumbnailsToRecord } = require('../lib/add-thumbnails-to-record')
 const { withServerDefaults } = require('../lib/with-server-defaults')
 const { buildMenuTree } = require('../lib/build-menu-tree')
 const { findGeonetworkInstances } = require('../lib/find-geonetwork-instances')
+const { fetchLayerXML } = require('../lib/fetch-layer-xml')
 
 const viewersWithLayersQuery = /* graphql */ `
 query viewersWithLayers ($first: IntType, $skip: IntType = 0) {
@@ -38,18 +38,6 @@ query LayerById($id: ItemId) {
   }
 }`
 
-function fetchLayerXML(layerId) {
-  /* 
-    node-fetch doesn't allow relative urls,
-    so we use an absolute url here by using
-    an environment variable that refers
-    to the url of the API
-  */
-  return fetch(
-    process.env.API_URL + `/api/layer?id=${layerId}&format=xml`
-  ).then((res) => res.text())
-}
-
 exports.handler = withServerDefaults(async (event, _) => {
   /* Protect this endpoint by using a token */
   if (process.env.SYNC_LAYER_API_TOKEN !== event.headers['x-api-key']) {
@@ -68,7 +56,7 @@ exports.handler = withServerDefaults(async (event, _) => {
 
   const geonetworkInstances = findGeonetworkInstances(menuTree, layerData)
 
-  let xml;
+  let xml
 
   Array.from(geonetworkInstances).forEach(async ([_, geonetworkInstance]) => {
     const { baseUrl, username, password } = geonetworkInstance
@@ -82,7 +70,7 @@ exports.handler = withServerDefaults(async (event, _) => {
     switch (layerData.event_type) {
       case 'create': {
         if (!xml) {
-          xml = await fetchLayerXML(layerData.entity.id)
+          xml = await fetchLayerXML({ id: layerData.entity.id })
         }
 
         await geonetwork.recordsRequest({
@@ -103,7 +91,7 @@ exports.handler = withServerDefaults(async (event, _) => {
 
       case 'publish': {
         if (!xml) {
-          xml = await fetchLayerXML(layerData.entity.id)
+          xml = await fetchLayerXML({ id: layerData.entity.id })
         }
 
         await geonetwork.recordsRequest({
@@ -117,17 +105,6 @@ exports.handler = withServerDefaults(async (event, _) => {
 
         break
       }
-
-      case 'delete':
-        await geonetwork.recordsRequest({
-          url: `/${layerData.entity.id}`,
-          method: 'DELETE',
-          options: {
-            responseText: true,
-          },
-        })
-
-        break
     }
 
     switch (layerData.event_type) {
@@ -141,8 +118,6 @@ exports.handler = withServerDefaults(async (event, _) => {
           query: layerByIdQuery,
           variables: { id },
         })
-
-        console.log(layerData.event_type)
 
         await addThumbnailsToRecord(thumbnails, id, geonetwork)
     }

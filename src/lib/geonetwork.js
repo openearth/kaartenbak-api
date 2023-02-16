@@ -20,7 +20,7 @@ class Geonetwork {
       responseText: false,
     },
   }) {
-    // Do request to get X-XSRF-TOKEN and Cookie: see docs https://geonetwork-opensource.org/manuals/3.10.x/en/customizing-application/misc.html
+    // Request to get X-XSRF-TOKEN and Cookie: see docs https://geonetwork-opensource.org/manuals/3.10.x/en/customizing-application/misc.html
     const me = await fetch(this.#baseUrl + '/me', {
       method: 'POST',
       headers: {
@@ -47,11 +47,7 @@ class Geonetwork {
       },
     }).then(async (res) => {
       if (options.responseText) {
-        const text = await res.text()
-
-        console.log(text)
-
-        return text
+        return res.text()
       }
 
       return res.json()

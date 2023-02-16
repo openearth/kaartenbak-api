@@ -43,13 +43,8 @@ async function addThumbnailsToRecord(thumbnails, recordId, geonetwork) {
     const attachment = await geonetwork.recordsRequest({
       url: `/${recordId}/attachments`,
       method: 'POST',
-      options: {
-        responseText: false,
-      },
       body: form,
     })
-
-    console.log(attachment)
 
     await geonetwork.recordsRequest({
       url: `/${attachment.metadataId}/processes/thumbnail-add?thumbnail_url=${attachment.url}&thumbnail_desc=&process=thumbnail-add&id=${attachment.metadataId}`,

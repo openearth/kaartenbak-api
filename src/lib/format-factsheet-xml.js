@@ -416,5 +416,5 @@ const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
 </gmd:MD_Metadata> 
 `
 module.exports = {
-  format
+  format,
 }

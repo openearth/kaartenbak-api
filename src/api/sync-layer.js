@@ -52,8 +52,6 @@ exports.handler = withServerDefaults(async (event, _) => {
     query: viewersWithLayersQuery,
   })
 
-  console.log("xml", )
-
   const menuTree = buildMenuTree(menus)
 
   const geonetworkInstances = findGeonetworkInstances(menuTree, layerData)

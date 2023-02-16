@@ -31,7 +31,6 @@ function executeFetch(query, variables = {}, preview = false) {
   })
     .then((response) => response.json())
     .then((response) => {
-      console.log(response)
       if (response.errors) throw Error(JSON.stringify(response, null, 4))
       return response
     })

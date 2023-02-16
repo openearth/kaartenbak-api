@@ -92,13 +92,7 @@ query LayerById($id: ItemId) {
 async function fetchLayerXML({
   id,
 }) {
-  console.log("before datocmsRequest")
-
-  console.log(id)
-
   const data = await datocmsRequest({ query, variables: { id } })
-
-  console.log("after datocmsRequest")
 
   const getCapabilitiesUrl = `${data.layer.url}?service=WMS&request=GetCapabilities`
 

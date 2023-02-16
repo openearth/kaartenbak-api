@@ -69,10 +69,6 @@ exports.handler = withServerDefaults(async (event, _) => {
       password
     )
 
-    console.log("before geonetwork records request")
-
-    console.log(layerData.event_type)
-
     switch (layerData.event_type) {
       case 'create': {
         if (!xml) {
@@ -96,13 +92,9 @@ exports.handler = withServerDefaults(async (event, _) => {
       }
 
       case 'publish': {
-        console.log("in publish")
-
         if (!xml) {
           xml = await fetchLayerXML({ id: layerData.entity.id })
         }
-
-        console.log("after fetchLayerXML")
 
         await geonetwork.recordsRequest({
           url: '?uuidProcessing=OVERWRITE&publishToAll=true',
@@ -116,8 +108,6 @@ exports.handler = withServerDefaults(async (event, _) => {
         break
       }
     }
-
-    console.log("after geonetwork records request")
 
     switch (layerData.event_type) {
       case 'create':

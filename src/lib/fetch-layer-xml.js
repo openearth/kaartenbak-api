@@ -94,6 +94,8 @@ async function fetchLayerXML({
 }) {
   console.log("before datocmsRequest")
 
+  console.log(id)
+
   const data = await datocmsRequest({ query, variables: { id } })
 
   console.log("after datocmsRequest")

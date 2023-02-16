@@ -125,7 +125,7 @@ const format = ({ id, layerInfo, layer }) => /* xml */ `
 
       <gmd:status>
         <gmd:MD_ProgressCode codeListValue="${
-          factsheet.identificationinfoStatus
+          layer.inspireMetadata.identificationinfoStatus
         }" codeList="https://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_ProgressCode"/>
       </gmd:status>
       <!-- TG Requirement C.10: metadata/2.0/req/common/responsible-organisation: The point of contact for the organisation responsible for the establishment, management, maintenance and distribution of the described resource shall be given using element gmd:pointOfContact/gmd:CI_ResponsibleParty. The multiplicity of this element is 1..*.

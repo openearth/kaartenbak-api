@@ -58,60 +58,66 @@ exports.handler = withServerDefaults(async (event, _) => {
 
   const xml = await fetchLayerXML({ id: layerData.entity.id })
 
-  Array.from(geonetworkInstances).forEach(async ([_, geonetworkInstance]) => {
-    const { baseUrl, username, password } = geonetworkInstance
+  const geonetworkInstancesArray = Array.from(geonetworkInstances)
 
-    const geonetwork = new Geonetwork(
-      baseUrl + 'geonetwork/srv/api',
-      username,
-      password
-    )
+  const requestsPromises = geonetworkInstancesArray.map(
+    async ([_, geonetworkInstance]) => {
+      const { baseUrl, username, password } = geonetworkInstance
 
-    switch (layerData.event_type) {
-      case 'create': {
-        await geonetwork.recordsRequest({
-          url: '?publishToAll=true',
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: xml,
-        })
+      const geonetwork = new Geonetwork(
+        baseUrl + 'geonetwork/srv/api',
+        username,
+        password
+      )
 
-        await datocmsClient.items.update(layerData.entity.id, {
-          metadata_url: `https://datahuiswadden.openearth.nl/geonetwork/srv/dut/catalog.search#/metadata/${layerData.entity.id}`,
-        })
+      switch (layerData.event_type) {
+        case 'create': {
+          await geonetwork.recordsRequest({
+            url: '?publishToAll=true',
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: xml,
+          })
 
-        break
+          await datocmsClient.items.update(layerData.entity.id, {
+            metadata_url: `https://datahuiswadden.openearth.nl/geonetwork/srv/dut/catalog.search#/metadata/${layerData.entity.id}`,
+          })
+
+          break
+        }
+
+        case 'publish': {
+          await geonetwork.recordsRequest({
+            url: '?uuidProcessing=OVERWRITE&publishToAll=true',
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: xml,
+          })
+
+          break
+        }
       }
 
-      case 'publish': {
-        await geonetwork.recordsRequest({
-          url: '?uuidProcessing=OVERWRITE&publishToAll=true',
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: xml,
-        })
+      switch (layerData.event_type) {
+        case 'create':
+        case 'publish':
+          const id = layerData.entity.id
 
-        break
+          const {
+            layer: { thumbnails },
+          } = await datocmsRequest({
+            query: layerByIdQuery,
+            variables: { id },
+          })
+
+          await addThumbnailsToRecord(thumbnails, id, geonetwork)
       }
     }
+  )
 
-    switch (layerData.event_type) {
-      case 'create':
-      case 'publish':
-        const id = layerData.entity.id
-
-        const {
-          layer: { thumbnails },
-        } = await datocmsRequest({
-          query: layerByIdQuery,
-          variables: { id },
-        })
-
-        await addThumbnailsToRecord(thumbnails, id, geonetwork)
-    }
-  })
+  await Promise.allSettled(requestsPromises)
 })

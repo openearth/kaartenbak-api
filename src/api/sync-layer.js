@@ -56,9 +56,9 @@ exports.handler = withServerDefaults(async (event, _) => {
 
   const geonetworkInstances = findGeonetworkInstances(menuTree, layerData)
 
-  const xml = await fetchLayerXML({ id: layerData.entity.id })
-
   const geonetworkInstancesArray = Array.from(geonetworkInstances)
+
+  const xml = await fetchLayerXML({ id: layerData.entity.id })
 
   const requestsPromises = geonetworkInstancesArray.map(
     async ([_, geonetworkInstance]) => {

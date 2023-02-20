@@ -5,7 +5,27 @@ const { withServerDefaults } = require('../lib/with-server-defaults')
 const { buildMenuTree } = require('../lib/build-menu-tree')
 const { findGeonetworkInstances } = require('../lib/find-geonetwork-instances')
 const { fetchLayerXML } = require('../lib/fetch-layer-xml')
-const { viewersWithLayersQuery } = require('../lib/viewers-with-layers-query')
+
+const viewersWithLayersQuery = /* graphql */ `
+query viewersWithLayers ($first: IntType, $skip: IntType = 0) {
+  menus: allMenus(first: $first, skip: $skip) {
+    id
+    geonetwork {
+      baseUrl
+      username
+      password
+    }
+    children: layers {
+      id
+    }
+    parent {
+      id
+    }
+  }
+  _allMenusMeta {
+    count
+  }
+}`
 
 const layerByIdQuery = /* graphql */ `
 query LayerById($id: ItemId) {

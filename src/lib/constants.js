@@ -12,11 +12,8 @@ const contentTypes = {
 
 const resourceNotFound = 'resource_not_found'
 
-const fulfilled = 'fulfilled'
-
 module.exports = {
   dateTypes,
   contentTypes,
   resourceNotFound,
-  fulfilled
 }

@@ -1,4 +1,4 @@
-function findGeonetworkInstances(menuTree, layerData) {
+function findGeonetworkInstances(menuTree, layerId) {
   const geonetworkInstances = new Map()
 
   menuTree.forEach((viewer) => {
@@ -7,7 +7,7 @@ function findGeonetworkInstances(menuTree, layerData) {
 
       if (children) {
         children.forEach((child) => {
-          if (child.id === layerData.entity.id) {
+          if (child.id === layerId) {
             const { geonetwork } = viewer
 
             if (geonetwork) {

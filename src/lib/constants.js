@@ -10,7 +10,13 @@ const contentTypes = {
   html: 'text/html',
 }
 
+const resourceNotFound = 'resource_not_found'
+
+const fulfilled = 'fulfilled'
+
 module.exports = {
   dateTypes,
-  contentTypes
+  contentTypes,
+  resourceNotFound,
+  fulfilled
 }

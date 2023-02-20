@@ -1,32 +1,11 @@
 const { Geonetwork } = require('../lib/geonetwork')
-const { datocmsClient } = require('../lib/datocms')
 const { datocmsRequest } = require('../lib/datocms')
 const { addThumbnailsToRecord } = require('../lib/add-thumbnails-to-record')
 const { withServerDefaults } = require('../lib/with-server-defaults')
 const { buildMenuTree } = require('../lib/build-menu-tree')
 const { findGeonetworkInstances } = require('../lib/find-geonetwork-instances')
 const { fetchLayerXML } = require('../lib/fetch-layer-xml')
-
-const viewersWithLayersQuery = /* graphql */ `
-query viewersWithLayers ($first: IntType, $skip: IntType = 0) {
-  menus: allMenus(first: $first, skip: $skip) {
-    id
-    geonetwork {
-      baseUrl
-      username
-      password
-    }
-    children: layers {
-      id
-    }
-    parent {
-      id
-    }
-  }
-  _allMenusMeta {
-    count
-  }
-}`
+const { viewersWithLayersQuery } = require('../lib/viewers-with-layers-query')
 
 const layerByIdQuery = /* graphql */ `
 query LayerById($id: ItemId) {
@@ -48,17 +27,19 @@ exports.handler = withServerDefaults(async (event, _) => {
 
   const layerData = JSON.parse(event.body)
 
+  const layerId = layerData.entity.id
+
   const { menus } = await datocmsRequest({
     query: viewersWithLayersQuery,
   })
 
   const menuTree = buildMenuTree(menus)
 
-  const geonetworkInstances = findGeonetworkInstances(menuTree, layerData)
+  const geonetworkInstances = findGeonetworkInstances(menuTree, layerId)
 
   const geonetworkInstancesArray = Array.from(geonetworkInstances)
 
-  const xml = await fetchLayerXML({ id: layerData.entity.id })
+  const xml = await fetchLayerXML({ id: layerId })
 
   const requestsPromises = geonetworkInstancesArray.map(
     async ([_, geonetworkInstance]) => {
@@ -81,10 +62,6 @@ exports.handler = withServerDefaults(async (event, _) => {
             body: xml,
           })
 
-          await datocmsClient.items.update(layerData.entity.id, {
-            metadata_url: `https://datahuiswadden.openearth.nl/geonetwork/srv/dut/catalog.search#/metadata/${layerData.entity.id}`,
-          })
-
           break
         }
 
@@ -105,16 +82,14 @@ exports.handler = withServerDefaults(async (event, _) => {
       switch (layerData.event_type) {
         case 'create':
         case 'publish':
-          const id = layerData.entity.id
-
           const {
             layer: { thumbnails },
           } = await datocmsRequest({
             query: layerByIdQuery,
-            variables: { id },
+            variables: { id: layerId },
           })
 
-          await addThumbnailsToRecord(thumbnails, id, geonetwork)
+          await addThumbnailsToRecord(thumbnails, layerId, geonetwork)
       }
     }
   )

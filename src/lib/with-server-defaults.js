@@ -1,4 +1,4 @@
-function withServerDefaults(fn) {
+export function withServerDefaults(fn) {
   return async (...args) => {
     try {
       const response = await fn(...args)
@@ -20,8 +20,4 @@ function withServerDefaults(fn) {
       }
     }
   }
-}
-
-module.exports = {
-  withServerDefaults
 }

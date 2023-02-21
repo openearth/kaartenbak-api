@@ -1,12 +1,13 @@
-const xmlEscape = require('xml-escape')
+import xmlEscape from 'xml-escape'
 
-function formatLinks(links) {
+export function formatLinks(links) {
   if (!links?.length) {
     return ''
   }
 
-  return links.map(
-    (link) => /* xml */ `
+  return links
+    .map(
+      (link) => /* xml */ `
     <gmd:onLine>
       <gmd:CI_OnlineResource>
         <gmd:linkage>
@@ -24,9 +25,6 @@ function formatLinks(links) {
       </gmd:CI_OnlineResource>
     </gmd:onLine>
     `
-  ).join('')
-}
-
-module.exports = {
-  formatLinks
+    )
+    .join('')
 }

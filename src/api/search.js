@@ -1,6 +1,6 @@
-const { datocmsRequest } = require('../lib/datocms')
-const { withServerDefaults } = require('../lib/with-server-defaults')
-const { buildChildrenTree } = require('../lib/build-children-tree')
+import { datocmsRequest } from '../lib/datocms'
+import { withServerDefaults } from '../lib/with-server-defaults'
+import { buildChildrenTree } from '../lib/build-children-tree'
 
 const datocmsQuery = /* graphql */ `
 query Layers ($first: IntType, $skip: IntType = 0) {
@@ -65,7 +65,7 @@ function findLayers(menu, query, foundLayers = []) {
   return foundLayers
 }
 
-exports.handler = withServerDefaults(async (event, _) => {
+export const handler = withServerDefaults(async (event, _) => {
   const { viewer, query } = event.queryStringParameters
 
   if (!viewer) {

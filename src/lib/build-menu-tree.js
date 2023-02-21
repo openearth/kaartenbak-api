@@ -1,6 +1,6 @@
-const { buildChildrenTree } = require('./build-children-tree')
+import { buildChildrenTree } from './build-children-tree'
 
-function buildMenuTree(menus) {
+export function buildMenuTree(menus) {
   buildChildrenTree(menus)
 
   const removeParentProperty = (menu) => {
@@ -16,6 +16,3 @@ function buildMenuTree(menus) {
   return menus.filter((menu) => menu.parent === null).map(removeParentProperty)
 }
 
-module.exports = {
-  buildMenuTree,
-}

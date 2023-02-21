@@ -1,7 +1,7 @@
-const { datocmsRequest } = require('../lib/datocms')
-const { format: formatHtml } = require('../lib/format-html')
-const { withServerDefaults } = require('../lib/with-server-defaults')
-const { contentTypes } = require('../lib/constants')
+import { datocmsRequest } from '../lib/datocms'
+import { format as formatHtml } from '../lib/format-html'
+import { withServerDefaults } from '../lib/with-server-defaults'
+import { contentTypes } from '../lib/constants'
 
 const query = /* graphql */ `
 query FactsheetById($id: ItemId) {
@@ -41,7 +41,7 @@ query FactsheetById($id: ItemId) {
 }
 `
 
-exports.handler = withServerDefaults(async (event, _) => {
+export const handler = withServerDefaults(async (event, _) => {
   const { id, format } = event.queryStringParameters
 
   if (!id) {

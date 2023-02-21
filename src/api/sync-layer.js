@@ -1,10 +1,10 @@
-const { Geonetwork } = require('../lib/geonetwork')
-const { datocmsRequest } = require('../lib/datocms')
-const { addThumbnailsToRecord } = require('../lib/add-thumbnails-to-record')
-const { withServerDefaults } = require('../lib/with-server-defaults')
-const { buildMenuTree } = require('../lib/build-menu-tree')
-const { findGeonetworkInstances } = require('../lib/find-geonetwork-instances')
-const { fetchLayerXML } = require('../lib/fetch-layer-xml')
+import { Geonetwork } from '../lib/geonetwork'
+import { datocmsRequest } from '../lib/datocms'
+import { addThumbnailsToRecord } from '../lib/add-thumbnails-to-record'
+import { withServerDefaults } from '../lib/with-server-defaults'
+import { buildMenuTree } from '../lib/build-menu-tree'
+import { findGeonetworkInstances } from '../lib/find-geonetwork-instances'
+import { fetchLayerXML } from '../lib/fetch-layer-xml'
 
 const viewersWithLayersQuery = /* graphql */ `
 query viewersWithLayers ($first: IntType, $skip: IntType = 0) {
@@ -37,7 +37,7 @@ query LayerById($id: ItemId) {
   }
 }`
 
-exports.handler = withServerDefaults(async (event, _) => {
+export const handler = withServerDefaults(async (event, _) => {
   /* Protect this endpoint by using a token */
   if (process.env.SYNC_LAYER_API_TOKEN !== event.headers['x-api-key']) {
     return {

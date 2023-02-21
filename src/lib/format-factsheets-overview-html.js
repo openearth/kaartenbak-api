@@ -1,4 +1,4 @@
-function formatFactsheetOverviewHTML(factsheets) {
+export function formatFactsheetOverviewHTML(factsheets) {
   return (html = /* html */ `
   <!DOCTYPE html>
   <html>
@@ -21,8 +21,4 @@ function formatFactsheetOverviewHTML(factsheets) {
   </body>
   </html>
   `)
-}
-
-module.exports = {
-  formatFactsheetOverviewHTML
 }

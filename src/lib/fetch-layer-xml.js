@@ -1,11 +1,9 @@
-const { datocmsRequest } = require('./datocms')
-const https = require('https')
-const {
-  format: formatInspireMetadataXml,
-} = require('./format-inspire-metadata-xml')
-const { format: formatFactsheetXml } = require('./format-factsheet-xml')
-const fetch = require('node-fetch')
-const convert = require('xml-js')
+import { datocmsRequest } from './datocms'
+import https from 'https'
+import { format as formatInspireMetadataXml } from './format-inspire-metadata-xml'
+import { format as formatFactsheetXml } from './format-factsheet-xml'
+import fetch from 'node-fetch'
+import convert from 'xml-js'
 
 const query = /* graphql */ `
 query LayerById($id: ItemId) {
@@ -89,9 +87,7 @@ query LayerById($id: ItemId) {
 }
 `
 
-async function fetchLayerXML({
-  id,
-}) {
+export async function fetchLayerXML({ id }) {
   const data = await datocmsRequest({ query, variables: { id } })
 
   const getCapabilitiesUrl = `${data.layer.url}?service=WMS&request=GetCapabilities`
@@ -134,8 +130,4 @@ async function fetchLayerXML({
   }
 
   return formatted
-}
-
-module.exports = {
-  fetchLayerXML,
 }

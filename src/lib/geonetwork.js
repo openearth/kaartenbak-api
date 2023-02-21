@@ -1,6 +1,6 @@
-const fetch = require('node-fetch')
+import fetch from 'node-fetch'
 
-class Geonetwork {
+export class Geonetwork {
   #baseUrl
   #username
   #password
@@ -66,8 +66,4 @@ class Geonetwork {
       url,
     })
   }
-}
-
-module.exports = {
-  Geonetwork
 }

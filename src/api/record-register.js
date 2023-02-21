@@ -1,9 +1,9 @@
-const { datocmsRequest } = require('../lib/datocms')
-const { withServerDefaults } = require('../lib/with-server-defaults')
-const { Geonetwork } = require('../lib/geonetwork')
-const { resourceNotFound } = require('../lib/constants')
-const { buildMenuTree } = require('../lib/build-menu-tree')
-const { findGeonetworkInstances } = require('../lib/find-geonetwork-instances')
+import { datocmsRequest } from '../lib/datocms'
+import { withServerDefaults } from '../lib/with-server-defaults'
+import { Geonetwork } from '../lib/geonetwork'
+import { resourceNotFound } from '../lib/constants'
+import { buildMenuTree } from '../lib/build-menu-tree'
+import { findGeonetworkInstances } from '../lib/find-geonetwork-instances'
 
 const geonetworkUrl = 'geonetwork/srv'
 
@@ -29,7 +29,7 @@ query viewersWithLayers ($first: IntType, $skip: IntType = 0) {
   }
 }`
 
-exports.handler = withServerDefaults(async (event, _) => {
+export const handler = withServerDefaults(async (event, _) => {
   const { record: recordId, viewer } = event.queryStringParameters
 
   if (!recordId) {

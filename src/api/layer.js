@@ -1,9 +1,9 @@
-const convert = require('xml-js')
-const { withServerDefaults } = require('../lib/with-server-defaults')
-const { contentTypes } = require('../lib/constants')
-const { fetchLayerXML } = require('../lib/fetch-layer-xml')
+import convert from 'xml-js'
+import { withServerDefaults } from '../lib/with-server-defaults'
+import { contentTypes } from '../lib/constants'
+import { fetchLayerXML } from '../lib/fetch-layer-xml'
 
-exports.handler = withServerDefaults(async (event, _) => {
+export const handler = withServerDefaults(async (event, _) => {
   const { id, format } = event.queryStringParameters
 
   if (!id) {

@@ -16,8 +16,6 @@ const camelCase = pipe(
 
 const defaultFirst = 100
 
-console.log(process.env)
-
 function executeFetch(query, variables = {}, preview = false) {
   const endpoint = preview
     ? 'https://graphql.datocms.com/preview'

@@ -1,7 +1,7 @@
-const FormData = require('form-data')
-const fetch = require('node-fetch')
+import FormData from 'form-data'
+import fetch from 'node-fetch'
 
-async function addThumbnailsToRecord(thumbnails, recordId, geonetwork) {
+export async function addThumbnailsToRecord(thumbnails, recordId, geonetwork) {
   const forms = await Promise.all(
     thumbnails.map(async (thumbnail) => {
       const blob = await fetch(thumbnail.url).then((res) => res.blob())
@@ -58,8 +58,4 @@ async function addThumbnailsToRecord(thumbnails, recordId, geonetwork) {
       },
     })
   }
-}
-
-module.exports = {
-  addThumbnailsToRecord
 }

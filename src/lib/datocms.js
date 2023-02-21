@@ -1,4 +1,4 @@
-const fetch = require('node-fetch')
+import fetch from 'node-fetch'
 import { buildClient } from '@datocms/cma-client-node'
 import { curry, times, pipe, split, map } from 'ramda'
 import slugify from '@sindresorhus/slugify'
@@ -15,6 +15,8 @@ const camelCase = pipe(
 )
 
 const defaultFirst = 100
+
+console.log(process.env)
 
 function executeFetch(query, variables = {}, preview = false) {
   const endpoint = preview
@@ -84,7 +86,7 @@ function returnData(response) {
   return response.data
 }
 
-const datocmsRequest = curry(({ query, variables, preview }) => {
+export const datocmsRequest = curry(({ query, variables, preview }) => {
   const args = [query, { first: defaultFirst, ...variables }, preview]
 
   return executeFetch(...args)
@@ -92,9 +94,4 @@ const datocmsRequest = curry(({ query, variables, preview }) => {
     .then(returnData)
 })
 
-const datocmsClient = buildClient({ apiToken: process.env.DATO_API_TOKEN })
-
-module.exports = {
-  datocmsRequest,
-  datocmsClient,
-}
+export const datocmsClient = buildClient({ apiToken: process.env.DATO_API_TOKEN })

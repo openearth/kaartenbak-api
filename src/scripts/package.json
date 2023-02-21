@@ -1,0 +1,13 @@
+{
+  "name": "scripts",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "main": "report-dead-layer-links.js",
+  "scripts": {
+    "start": "node report-dead-layer-links.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

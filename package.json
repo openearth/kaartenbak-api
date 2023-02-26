@@ -12,8 +12,10 @@
     "@sindresorhus/slugify": "^2.1.1",
     "dotenv": "^16.0.3",
     "form-data": "^4.0.0",
+    "jsdom": "^21.1.0",
     "ngrok": "^4.3.3",
-    "node-fetch": "^2.6.9",
+    "node-fetch": "^3.3.0",
+    "query-string": "^6.13.7",
     "ramda": "^0.28.0",
     "xml-escape": "^1.1.0",
     "xml-js": "^1.6.11"

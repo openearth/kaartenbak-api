@@ -1,4 +1,4 @@
-import { buildChildrenTree } from './build-children-tree'
+import { buildChildrenTree } from './build-children-tree.js'
 
 export function buildMenuTree(menus) {
   buildChildrenTree(menus)

@@ -1,6 +1,6 @@
 const fetchResults = new Map()
 
-async function cachedFetch(url) {
+async function cachedFetch(url, options) {
   if (fetchResults.has(url)) {
     return fetchResults.get(url)
   }
@@ -18,6 +18,7 @@ async function cachedFetch(url) {
   const res = await fetch(url, {
     agent: httpsAgent,
     signal: controller.signal,
+    ...options
   })
     .then((res) => res)
     .catch((err) => err)

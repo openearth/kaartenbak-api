@@ -1,42 +1,17 @@
-import fetch from 'node-fetch'
-import https from 'https'
-
 import buildWmsLayer from './build-wms-layer.js'
 import { getWmsCapabilities, getLayerProperties } from './get-capabilities.js'
+import { cachedFetch } from './cached-fetch.js'
 
-const fetchResults = new Map()
-
-async function fetchWmsLayer(url) {
-  if (fetchResults.has(url)) {
-    return fetchResults.get(url)
-  }
-
-  const httpsAgent = new https.Agent({
-    rejectUnauthorized: false,
-  })
-
-  const controller = new AbortController()
-
-  const timeout = setTimeout(() => {
-    controller.abort()
-  }, 10000)
-
-  const linkIsDead = await fetch(url, {
-    agent: httpsAgent,
-    signal: controller.signal,
-  })
-    .then((res) => {
+function fetchWmsLayer(url) {
+  return cachedFetch({
+    url,
+    resolveResponseFunction: (res) => {
       if (res.headers.get('content-type') !== 'image/png') {
         return true
       }
       return false
-    })
-    .catch(() => true)
-    .finally(() => clearTimeout(timeout))
-
-  fetchResults.set(url, linkIsDead)
-
-  return linkIsDead
+    },
+  }).catch(() => true)
 }
 
 export async function findDeadLayerLinks(menuTree) {
@@ -58,17 +33,18 @@ export async function findDeadLayerLinks(menuTree) {
       const { url, layer } = menu
 
       if (url && layer) {
-        let linkState = {}
-
         const { requestPath, linkIsDead, document } = await getWmsCapabilities(
           url
         )
 
         if (linkIsDead) {
-          linkState = {
-            link: requestPath,
-            linkIsDead,
-          }
+          menuItems.push({
+            name,
+            linkState: {
+              link: requestPath,
+              linkIsDead,
+            },
+          })
         } else {
           const { serviceType, timeExtent, wmsVersion, bbox } =
             getLayerProperties(document, layer)
@@ -83,18 +59,14 @@ export async function findDeadLayerLinks(menuTree) {
 
           const linkIsDead = await fetchWmsLayer(requestUrl)
 
-          linkState = {
-            link: requestUrl,
-            linkIsDead,
-          }
+          menuItems.push({
+            name,
+            linkState: {
+              link: requestUrl,
+              linkIsDead,
+            },
+          })
         }
-
-        console.log(linkState)
-
-        menuItems.push({
-          name,
-          linkState,
-        })
       }
     }
 

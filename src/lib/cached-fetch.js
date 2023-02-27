@@ -1,8 +1,21 @@
+import fetch from 'node-fetch'
+import https from 'https'
+
 const fetchResults = new Map()
 
-async function cachedFetch(url, options) {
+export async function cachedFetch({
+  url,
+  options,
+  resolveResponseFunction
+}) {
   if (fetchResults.has(url)) {
-    return fetchResults.get(url)
+    const fetchResult = fetchResults.get(url)
+
+    if (fetchResult instanceof Error) {
+      throw fetchResult
+    }
+
+    return fetchResult
   }
 
   const httpsAgent = new https.Agent({
@@ -18,13 +31,17 @@ async function cachedFetch(url, options) {
   const res = await fetch(url, {
     agent: httpsAgent,
     signal: controller.signal,
-    ...options
+    ...options,
   })
-    .then((res) => res)
+    .then((res) => resolveResponseFunction(res))
     .catch((err) => err)
     .finally(() => clearTimeout(timeout))
 
   fetchResults.set(url, res)
 
-  return linkIsDead
+  if (res instanceof Error) {
+    throw res
+  }
+
+  return res
 }

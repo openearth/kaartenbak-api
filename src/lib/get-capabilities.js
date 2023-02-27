@@ -1,8 +1,6 @@
-import fetch from 'node-fetch'
 import { map, pipe } from 'ramda'
 import jsdom from 'jsdom'
-
-import https from 'https'
+import { cachedFetch } from './cached-fetch.js'
 
 const getTagContent = (tag) => tag?.textContent
 const getParentNode = (tag) => tag?.parentNode
@@ -41,42 +39,15 @@ function readBbox(bboxElement) {
   return bbox
 }
 
-const fetchResults = new Map()
-
-async function fetchGetCapabilities(url) {
-  if (fetchResults.has(url)) {
-    return fetchResults.get(url)
-  }
-
-  const httpsAgent = new https.Agent({
-    rejectUnauthorized: false,
-  })
-
-  const controller = new AbortController()
-
-  const timeout = setTimeout(() => {
-    controller.abort()
-  }, 10000)
-
-  const data = await fetch(url, {
-    agent: httpsAgent,
-    signal: controller.signal,
-  })
-    .then((res) => res.text())
-    .catch(() => undefined)
-    .finally(() => clearTimeout(timeout))
-
-  fetchResults.set(url, data)
-
-  return data
-}
-
 export async function getWmsCapabilities(service) {
   const serviceUrl = new URL(service)
   const servicePath = `${serviceUrl.origin}${serviceUrl.pathname}`
   const requestPath = `${servicePath}?service=WMS&request=GetCapabilities`
 
-  const data = await fetchGetCapabilities(requestPath)
+  const data = await cachedFetch({
+    url: requestPath,
+    resolveResponseFunction: (res) => res.text(),
+  }).catch(() => undefined)
 
   if (!data) {
     return {

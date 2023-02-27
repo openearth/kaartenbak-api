@@ -14,6 +14,9 @@ query viewersWithLayers ($first: IntType, $skip: IntType = 0) {
   menus: allMenus(first: $first, skip: $skip) {
     id
     name
+    deadLinksReportContacts {
+      email
+    }
     children: layers {
       id
       name
@@ -39,6 +42,12 @@ function pbcopy(data) {
 
 // import deadLayerLinks from './links.json' assert { type: 'json' }
 
+function getViewersPerContact(menuTree) {
+  const contacts = []
+
+  
+}
+
 async function report() {
   const { menus } = await datocmsRequest({
     query: viewersWithLayersQuery,
@@ -46,11 +55,13 @@ async function report() {
 
   const menuTree = buildMenuTree(menus)
 
-  const deadLayerLinks = await findDeadLayerLinks(menuTree)
+  console.log(menuTree)
 
-  console.dir(filterDeadLayerLinks(deadLayerLinks), { depth: null })
+  // const deadLayerLinks = await findDeadLayerLinks(menuTree)
 
-  pbcopy(JSON.stringify(filterDeadLayerLinks(deadLayerLinks)))
+  // console.dir(filterDeadLayerLinks(deadLayerLinks), { depth: null })
+
+  // pbcopy(JSON.stringify(filterDeadLayerLinks(deadLayerLinks)))
 }
 
 report()

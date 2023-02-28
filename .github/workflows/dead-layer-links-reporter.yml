@@ -1,6 +1,9 @@
 name: Dead layer links reporter
 author: Deltares
 description: Sends emails containing dead layer links to contacts defined in Kaartenbak (DatoCMS)
+on: 
+  schedule:
+    - cron: '0 8 * * 1-5'
 jobs:
   report:
     runs-on: ubuntu-latest

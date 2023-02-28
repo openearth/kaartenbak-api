@@ -23,10 +23,12 @@ export async function findDeadLayerLinks(menuTree) {
 
       if (children) {
         const childItems = await findInMenu(children)
+        const { deadLinksReportContacts } = menu
 
         menuItems.push({
           name,
           ...(childItems.length && { children: childItems }),
+          ...(deadLinksReportContacts?.length && { deadLinksReportContacts })
         })
       }
 

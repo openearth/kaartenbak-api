@@ -1,7 +1,7 @@
 import fetch from 'node-fetch'
 import https from 'https'
 
-const fetchResults = new Map()
+export const fetchResults = new Map()
 
 export async function cachedFetch({
   url,

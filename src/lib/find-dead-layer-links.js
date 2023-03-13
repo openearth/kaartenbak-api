@@ -42,10 +42,7 @@ export async function findDeadLayerLinks(menuTree) {
         if (linkIsDead) {
           menuItems.push({
             name,
-            linkState: {
-              link: requestPath,
-              linkIsDead,
-            },
+            link: requestPath,
           })
         } else {
           const { serviceType, timeExtent, wmsVersion, bbox } =
@@ -61,13 +58,12 @@ export async function findDeadLayerLinks(menuTree) {
 
           const linkIsDead = await fetchWmsLayer(requestUrl)
 
-          menuItems.push({
-            name,
-            linkState: {
+          if (linkIsDead) {
+            menuItems.push({
+              name,
               link: requestUrl,
-              linkIsDead,
-            },
-          })
+            })
+          }
         }
       }
     }

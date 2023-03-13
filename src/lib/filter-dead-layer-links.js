@@ -10,10 +10,7 @@ export function filterDeadLayerLinks(deadLayerLinks) {
         menu.children = menu.children.filter((item) => item)
       }
 
-      if (
-        menu?.linkState?.linkIsDead === false ||
-        menu?.children?.length === 0
-      ) {
+      if ((!menu.children || menu.children.length === 0) && !menu.link) {
         delete menus[index]
       }
     }

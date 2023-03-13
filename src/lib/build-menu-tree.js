@@ -1,7 +1,8 @@
 import { buildChildrenTree } from './build-children-tree.js'
 
 export function buildMenuTree(menus) {
-  buildChildrenTree(menus)
+  const menusCopy = JSON.parse(JSON.stringify(menus))
+  buildChildrenTree(menusCopy)
 
   const removeParentProperty = (menu) => {
     const { parent, children = [], ...item } = menu
@@ -13,6 +14,7 @@ export function buildMenuTree(menus) {
     }
   }
 
-  return menus.filter((menu) => menu.parent === null).map(removeParentProperty)
+  return menusCopy
+    .filter((menu) => menu.parent === null)
+    .map(removeParentProperty)
 }
-

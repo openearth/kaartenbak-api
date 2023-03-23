@@ -1,8 +1,8 @@
 name: Dead layer links reporter
-# on: 
-#   schedule:
-#     - cron: '0 8 * * 1-5'
-on: push
+on: 
+  schedule:
+    - cron: '0 7 * * 1-5'
+# on: push
 jobs:
   report:
     runs-on: ubuntu-latest

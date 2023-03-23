@@ -18,8 +18,6 @@ import { findDeadLayerLinks } from '../lib/find-dead-layer-links.js'
 import { filterDeadLayerLinks } from '../lib/filter-dead-layer-links.js'
 import { getViewersPerContact } from '../lib/get-viewers-per-contact.js'
 
-import { fetchResults } from '../lib/cached-fetch.js'
-
 const viewersWithLayersQuery = /* graphql */ `
 query viewersWithLayers ($first: IntType, $skip: IntType = 0) {
   menus: allMenus(first: $first, skip: $skip) {
@@ -43,21 +41,11 @@ query viewersWithLayers ($first: IntType, $skip: IntType = 0) {
   }
 }`
 
-import { spawn } from 'child_process'
-
-function pbcopy(data) {
-  var proc = spawn('pbcopy')
-  proc.stdin.write(data)
-  proc.stdin.end()
-}
-
 async function report() {
   try {
     const { menus } = await datocmsRequest({
       query: viewersWithLayersQuery,
     })
-
-    console.log('Starting')
 
     const menuTree = buildMenuTree(menus)
 
@@ -65,9 +53,7 @@ async function report() {
 
     const filteredDeadLayerLinks = filterDeadLayerLinks(deadLayerLinks)  
 
-    // const viewersPerContact = getViewersPerContact(filteredDeadLayerLinks)
-
-    pbcopy(JSON.stringify(filteredDeadLayerLinks))
+    console.log(JSON.stringify(filteredDeadLayerLinks))
   } catch (err) {
     console.error(err)
   }

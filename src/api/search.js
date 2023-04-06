@@ -27,39 +27,45 @@ function isMatchCaseInsensitive(value, search) {
   return value?.toLowerCase().indexOf(search) > -1
 }
 
-function layerMatches(key, indexableWfsProperties, name, description, query) {
+function layerMatches(indexableWfsProperties, name, description, query) {
   return (
-    (key.match('indexableWfsProperties') &&
-      indexableWfsProperties?.some((property) =>
-        property?.keywords?.some((keyword) =>
-          isMatchCaseInsensitive(keyword, query)
-        )
-      )) ||
+    indexableWfsProperties?.some((property) =>
+      property?.keywords?.some((keyword) =>
+        isMatchCaseInsensitive(keyword, query)
+      )
+    ) ||
     isMatchCaseInsensitive(name, query) ||
     isMatchCaseInsensitive(description, query)
   )
 }
 
 // Find layers recursively by matching them to the search query
-function findLayers(menu, query, foundLayers = []) {
-  menu &&
-    Object.keys(menu).forEach((key) => {
-      if (typeof menu[key] === 'object') {
-        findLayers(menu[key], query, foundLayers)
+function findLayers(menu, query) {
+  const foundLayers = []
+
+  const findInMenu = (menus) => {
+    for (const menu of menus) {
+      const { children } = menu
+
+      if (children) {
+        findInMenu(children)
       }
 
       const { name, description, indexableWfsProperties } = menu
-
-      if (layerMatches(key, indexableWfsProperties, name, description, query)) {
+    
+      if (layerMatches(indexableWfsProperties, name, description, query)) {
         const { id } = menu
-
+    
         foundLayers.push({
           id,
           name,
           description,
         })
       }
-    })
+    }
+  }
+
+  findInMenu([menu])
 
   return foundLayers
 }

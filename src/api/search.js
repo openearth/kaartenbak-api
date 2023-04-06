@@ -29,15 +29,14 @@ function isMatchCaseInsensitive(value, search) {
 
 function layerMatches(key, indexableWfsProperties, name, description, query) {
   return (
-    key.match('indexableWfsProperties') &&
-    indexableWfsProperties?.some(
-      (property) =>
+    (key.match('indexableWfsProperties') &&
+      indexableWfsProperties?.some((property) =>
         property?.keywords?.some((keyword) =>
           isMatchCaseInsensitive(keyword, query)
-        ) ||
-        isMatchCaseInsensitive(name, query) ||
-        isMatchCaseInsensitive(description, query)
-    )
+        )
+      )) ||
+    isMatchCaseInsensitive(name, query) ||
+    isMatchCaseInsensitive(description, query)
   )
 }
 

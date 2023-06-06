@@ -17,6 +17,7 @@
     "jsdom": "^21.1.0",
     "ngrok": "^4.3.3",
     "node-fetch": "^3.3.0",
+    "node-mailjet": "^6.0.2",
     "query-string": "^6.13.7",
     "ramda": "^0.28.0",
     "xml-escape": "^1.1.0",

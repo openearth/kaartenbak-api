@@ -2,15 +2,35 @@ import { datocmsRequest } from '../lib/datocms'
 import { withServerDefaults } from '../lib/with-server-defaults'
 import { buildMenuTree } from '../lib/build-menu-tree'
 import * as EmailValidator from 'email-validator'
+import Mailjet from 'node-mailjet'
+
+const mailjet = new Mailjet({
+  apiKey: process.env.MAILJET_API_TOKEN,
+  apiSecret: process.env.MAILJET_API_SECRET,
+})
+
+const feedbackContactFragment = `
+  fragment FeedbackContact on ContactRecord {
+    email
+  }
+`
 
 const viewersWithLayersQuery = /* graphql */ `
+${feedbackContactFragment}
+
 query viewersWithLayers ($first: IntType, $skip: IntType = 0) {
   menus: allMenus(first: $first, skip: $skip) {
     id
     name
+    feedbackContacts {
+      ...FeedbackContact
+    }
     children: layers {
       id
       name
+      feedbackContacts {
+        ...FeedbackContact
+      }
     }
     parent {
       id
@@ -51,6 +71,7 @@ export const handler = withServerDefaults(async (event, _) => {
     name,
     email,
     feedback,
+    shareUrl,
   } = JSON.parse(event.body)
 
   if (!viewerName) {
@@ -108,27 +129,43 @@ export const handler = withServerDefaults(async (event, _) => {
     }
   }
 
-  let { feedbackContact } = viewer;
+  let { feedbackContacts } = viewer
+  const menuOrLayer = findMenuOrLayer(viewer, menuOrLayerId)
 
-  if (!feedbackContact) {
-    const menuOrLayer = findMenuOrLayer(viewer, menuOrLayerId)
-
-    if (!menuOrLayer) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ error: 'menu or layer not found' }),
-      }
+  if (!menuOrLayer) {
+    return {
+      statusCode: 404,
+      body: JSON.stringify({ error: 'menu or layer not found' }),
     }
+  }
 
-    feedbackContact = menuOrLayer.feedbackContact
+  if (!feedbackContacts?.length) {
+    feedbackContacts = menuOrLayer.feedbackContacts
 
-    if (!feedbackContact) {
+    if (!feedbackContacts?.length) {
       return {
         statusCode: 404,
-        body: JSON.stringify({ error: 'feedback contact not found' }),
+        body: JSON.stringify({ error: 'feedback contacts not found' }),
       }
     }
   }
 
-  console.log(feedbackContact)
+  for (const contact of feedbackContacts) {
+    await mailjet.post('send', { version: 'v3.1' }).request({
+      Messages: [
+        {
+          From: {
+            Email: process.env.MAILJET_FROM_EMAIL,
+          },
+          To: [
+            {
+              Email: contact.email,
+            },
+          ],
+          Subject: 'Feedback',
+          HTMLPart: `<p>Feedback van ${name}</p><p>Email: ${email}</p><p>Betreft de viewer/menu/folder/layer: <a href="${shareUrl}">${menuOrLayer.name}</a></p><p>Feedback:</p><p>${feedback}</p>`,
+        },
+      ],
+    })
+  }
 })

@@ -26,7 +26,7 @@ export async function cachedFetch({
 
   const timeout = setTimeout(() => {
     controller.abort()
-  }, 10000)
+  }, 20000)
 
   const res = await fetch(url, {
     agent: httpsAgent,

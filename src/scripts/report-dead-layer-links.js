@@ -19,6 +19,8 @@ import { findDeadLayerLinks } from '../lib/find-dead-layer-links.js'
 import { filterDeadLayerLinks } from '../lib/filter-dead-layer-links.js'
 import { getViewersPerContact } from '../lib/get-viewers-per-contact.js'
 
+console.log(process.env)
+
 const mailjet = new Mailjet({
   apiKey: process.env.MAILJET_API_TOKEN,
   apiSecret: process.env.MAILJET_API_SECRET,

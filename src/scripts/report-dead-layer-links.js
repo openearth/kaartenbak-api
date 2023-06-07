@@ -1,6 +1,9 @@
 import path, { dirname } from 'path'
 import dotenv from 'dotenv'
 import { fileURLToPath } from 'url'
+
+console.log(process.env)
+
 import Mailjet from 'node-mailjet'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -19,7 +22,7 @@ import { findDeadLayerLinks } from '../lib/find-dead-layer-links.js'
 import { filterDeadLayerLinks } from '../lib/filter-dead-layer-links.js'
 import { getViewersPerContact } from '../lib/get-viewers-per-contact.js'
 
-console.log(process.env)
+
 
 const mailjet = new Mailjet({
   apiKey: process.env.MAILJET_API_TOKEN,

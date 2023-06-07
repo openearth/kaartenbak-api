@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url'
 
 console.log(process.env)
 
-import Mailjet from 'node-mailjet'
+// import Mailjet from 'node-mailjet'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -22,12 +22,10 @@ import { findDeadLayerLinks } from '../lib/find-dead-layer-links.js'
 import { filterDeadLayerLinks } from '../lib/filter-dead-layer-links.js'
 import { getViewersPerContact } from '../lib/get-viewers-per-contact.js'
 
-
-
-const mailjet = new Mailjet({
-  apiKey: process.env.MAILJET_API_TOKEN,
-  apiSecret: process.env.MAILJET_API_SECRET,
-})
+// const mailjet = new Mailjet({
+//   apiKey: process.env.MAILJET_API_TOKEN,
+//   apiSecret: process.env.MAILJET_API_SECRET,
+// })
 
 const viewersWithLayersQuery = /* graphql */ `
 query viewersWithLayers ($first: IntType, $skip: IntType = 0) {

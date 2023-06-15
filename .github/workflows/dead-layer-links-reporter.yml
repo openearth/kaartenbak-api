@@ -1,21 +1,20 @@
-name: Dead layer links reporter
-on: 
-  schedule:
-    - cron: '0 6 * * 1-5'
-# on: push
-jobs:
-  report:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 16
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run report
-        env:
-          DATO_API_TOKEN: ${{ secrets.DATO_API_TOKEN }}
-          MAILJET_API_SECRET: ${{ secrets.MAILJET_API_SECRET }}
-          MAILJET_API_TOKEN: ${{ secrets.MAILJET_API_TOKEN }}
-          MAILJET_FROM_EMAIL: ${{ secrets.MAILJET_FROM_EMAIL }}
+# name: Dead layer links reporter
+# on: 
+#   schedule:
+#     - cron: '0 6 * * 1-5'
+# jobs:
+#   report:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v3
+#       - uses: actions/setup-node@v3
+#         with:
+#           node-version: 16
+#           cache: 'npm'
+#       - run: npm ci
+#       - run: npm run report
+#         env:
+#           DATO_API_TOKEN: ${{ secrets.DATO_API_TOKEN }}
+#           MAILJET_API_SECRET: ${{ secrets.MAILJET_API_SECRET }}
+#           MAILJET_API_TOKEN: ${{ secrets.MAILJET_API_TOKEN }}
+#           MAILJET_FROM_EMAIL: ${{ secrets.MAILJET_FROM_EMAIL }}

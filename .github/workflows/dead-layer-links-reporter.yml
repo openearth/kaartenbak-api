@@ -1,3 +1,4 @@
+# TODO: enable this after checking for dead layer links works correctly
 # name: Dead layer links reporter
 # on: 
 #   schedule:

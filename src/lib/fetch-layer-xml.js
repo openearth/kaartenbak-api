@@ -32,6 +32,12 @@ query LayerById($id: ItemId) {
         referencesystemidentifierCode
         hierarchylevel
         lineageStatement
+        links {
+          protocol
+          url
+          name
+          description
+        }
       }
     factsheets {
       _updatedAt

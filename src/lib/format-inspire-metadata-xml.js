@@ -328,7 +328,7 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
       The multiplicity of this element is 0..n. -->
       <gmd:transferOptions>
         <gmd:MD_DigitalTransferOptions>
-          ${formatLinks(layer.links)}
+          ${formatLinks(layer.links.concat(layer.inspireMetadata.links))}
         </gmd:MD_DigitalTransferOptions>
       </gmd:transferOptions>
     </gmd:MD_Distribution>

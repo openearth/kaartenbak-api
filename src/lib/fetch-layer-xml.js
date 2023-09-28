@@ -106,7 +106,11 @@ export async function fetchLayerXML({ id }) {
     })
   )
 
-  const layerInfo = capabilities.WMS_Capabilities.Capability.Layer.Layer.find(
+  const layers = Array.isArray(capabilities.WMS_Capabilities.Capability.Layer.Layer)
+    ? capabilities.WMS_Capabilities.Capability.Layer.Layer
+    : [capabilities.WMS_Capabilities.Capability.Layer.Layer]
+
+  const layerInfo = layers.find(
     (layer) => layer.Name._text === data.layer.layer
   )
 

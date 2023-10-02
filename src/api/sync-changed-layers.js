@@ -5,7 +5,6 @@ import { withServerDefaults } from '../lib/with-server-defaults'
 import { buildMenuTree } from '../lib/build-menu-tree'
 import { findGeonetworkInstances } from '../lib/find-geonetwork-instances'
 import { fetchLayerXML } from '../lib/fetch-layer-xml'
-import { buildClient } from '@datocms/cma-client-node'
 
 const viewersWithLayersQuery = /* graphql */ `
 query viewersWithLayers ($first: IntType, $skip: IntType = 0) {
@@ -48,23 +47,32 @@ export const handler = withServerDefaults(async (event, _) => {
     }
   }
 
-  const changedLayers = await getChangedLayers()
+  const pluginData = await getPluginData()
+  const changedLayers = pluginData.parameters.changedLayers
 
-  console.log(changedLayers)
+  for await(let layerId of changedLayers) {
+    console.log(`Updating layer: ${layerId}`)
+    
+    await updateLayer(layerId)
+  }
+
+  await unmarkLayers(pluginData.id)
 })
 
-async function getChangedLayers() {
-  const PLUGIN_NAME = 'markLayerAsChanged'
+async function getPluginData() {
+  const PLUGIN_NAME = 'Mark layers as changed'
 
   const plugins = await datocmsClient.plugins.list()
   
-  const markLayersAsChangedPlugin = plugins.find(plugin => plugin.name === PLUGIN_NAME)
-  
-  if (markLayersAsChangedPlugin) {
-    return markLayersAsChangedPlugin.parameters.changedLayers
-  } else {
-    return []
-  }
+  return plugins.find(plugin => plugin.name === PLUGIN_NAME)
+}
+
+async function unmarkLayers(pluginId) {
+  await datocmsClient.plugins.update(pluginId, {
+    parameters: {
+      changedLayers: []
+    }
+  })
 }
 
 async function loadMenuTree() {

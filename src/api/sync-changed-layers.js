@@ -49,14 +49,22 @@ export const handler = withServerDefaults(async (event, _) => {
 
   const pluginData = await getPluginData()
   const changedLayers = pluginData.parameters.changedLayers
+  let updatedLayers = []
+
+  console.log(`The following layers were marked as changed: ${changedLayers}`)
 
   for await(let layerId of changedLayers) {
     console.log(`Updating layer: ${layerId}`)
     
-    await updateLayer(layerId)
+    try {
+      await updateLayer(layerId)
+      updatedLayers.push(layerId)
+    } catch(e) {
+      console.log(`Failed to update layer ${layerId}. Reason: ${e.message}`)
+    }
   }
 
-  await unmarkLayers(pluginData.id)
+  await unmarkLayers(pluginData.id, updatedLayers)
 })
 
 async function getPluginData() {
@@ -67,10 +75,16 @@ async function getPluginData() {
   return plugins.find(plugin => plugin.name === PLUGIN_NAME)
 }
 
-async function unmarkLayers(pluginId) {
+async function unmarkLayers(pluginId, layerIds) {
+  const pluginData = await datocmsClient.plugins.find(pluginId)
+
   await datocmsClient.plugins.update(pluginId, {
     parameters: {
-      changedLayers: []
+
+      // Remove the just updated layers from the changedLayers list
+      changedLayers: pluginData.parameters.changedLayers.filter(id => {
+        return !layerIds.includes(id)
+      })
     }
   })
 }

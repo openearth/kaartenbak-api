@@ -65,7 +65,7 @@ export const handler = withServerDefaults(async (event, _) => {
   const menuTree = buildMenuTree(menus)
 
   try {
-    await syncLayers(menuTree, layerData, layerId)
+    await syncLayers(menuTree, layerData.event_type, layerId)
   }
   catch(e) {
     console.log('The following error occured', e.message)
@@ -94,12 +94,17 @@ export const handler = withServerDefaults(async (event, _) => {
 
 })
 
-async function syncLayers(menuTree, layerData, layerId) {
+async function syncLayers(menuTree, eventType, layerId) {
   const geonetworkInstances = findGeonetworkInstances(menuTree, layerId)
 
   const geonetworkInstancesArray = Array.from(geonetworkInstances)
 
   const xml = await fetchLayerXML({ id: layerId })
+
+  // Can occur when no update needs to be done (because there is no factsheet or inspireMetadata)
+  if(xml === null) {
+    return
+  }
 
   const requestsPromises = geonetworkInstancesArray.map(
     async ([_, geonetworkInstance]) => {
@@ -111,7 +116,7 @@ async function syncLayers(menuTree, layerData, layerId) {
         password
       )
 
-      switch (layerData.event_type) {
+      switch (eventType) {
         case 'create': {
           await geonetwork.recordsRequest({
             url: '?publishToAll=true',
@@ -139,7 +144,7 @@ async function syncLayers(menuTree, layerData, layerId) {
         }
       }
 
-      switch (layerData.event_type) {
+      switch (eventType) {
         case 'create':
         case 'publish':
           const {

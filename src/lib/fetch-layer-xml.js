@@ -121,21 +121,24 @@ export async function fetchLayerXML({ id }) {
   )
 
   if(!layerInfo) {
-    throw new Error(`Can't find layer with name ${data.layer.layer}. Make sure to not include the workspace name in the url`)
+    throw new Error(`Can't find layer with name ${data.layer.layer}`)
   }
 
-  let formatted
+  let formatted = null
 
   if (data.layer.useFactsheetAsMetadata) {
     const factsheet = data.layer.factsheets[0]
 
-    formatted = formatFactsheetXml({
-      id,
-      layerInfo,
-      layer: data.layer,
-      factsheet,
-    })
-  } else {
+    if(factsheet) {
+      formatted = formatFactsheetXml({
+        id,
+        layerInfo,
+        layer: data.layer,
+        factsheet,
+      })
+    }
+
+  } else if(data.layer.inspireMetadata) {
     formatted = formatInspireMetadataXml({
       id,
       layerInfo,

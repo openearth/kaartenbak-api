@@ -5,6 +5,12 @@ import { withServerDefaults } from '../lib/with-server-defaults'
 import { buildMenuTree } from '../lib/build-menu-tree'
 import { findGeonetworkInstances } from '../lib/find-geonetwork-instances'
 import { fetchLayerXML } from '../lib/fetch-layer-xml'
+import Mailjet from 'node-mailjet'
+
+const mailjet = new Mailjet({
+  apiKey: process.env.MAILJET_API_TOKEN,
+  apiSecret: process.env.MAILJET_API_SECRET,
+})
 
 const viewersWithLayersQuery = /* graphql */ `
 query viewersWithLayers ($first: IntType, $skip: IntType = 0) {
@@ -14,6 +20,9 @@ query viewersWithLayers ($first: IntType, $skip: IntType = 0) {
       baseUrl
       username
       password
+    }
+    errorNotificationContacts {
+      email
     }
     children: layers {
       id
@@ -114,5 +123,65 @@ export const handler = withServerDefaults(async (event, _) => {
     }
   )
 
-  await Promise.allSettled(requestsPromises)
+  const results = await Promise.allSettled(requestsPromises)
+
+  const errors = results.filter(result => result.status === 'rejected')
+
+  if(errors.length) {
+    console.log(errors)
+
+    const messages = errors.map(error => `<li>${error.reason}</li>`)
+    const contacts = findEmailContactsForLayerId(menuTree, layerId)
+
+    for(let contact of contacts) {
+      await mailjet.post('send', { version: 'v3.1' }).request({
+        Messages: [
+          {
+            From: {
+              Email: process.env.MAILJET_FROM_EMAIL,
+            },
+            To: [
+              {
+                Email: contact.email,
+              },
+            ],
+            Subject: `Fout bij synchroniseren metadata voor laag ${layerId}`,
+            HTMLPart: `<p>Er ging iets Fout bij synchroniseren metadata voor laag:</p><ul>${ messages }</ul>`,
+          },
+        ],
+      })
+    }
+  }
+
 })
+
+
+export function findEmailContactsForLayerId(menuTree, layerId) {
+  const contacts = new Set()
+
+  menuTree.forEach((viewer) => {
+    const findInMenu = (menu) => {
+      const { children } = menu
+
+      if (children) {
+        children.forEach((child) => {
+          if (child.id === layerId) {
+            const { errorNotificationContacts } = viewer
+
+            if (errorNotificationContacts.email) {
+              for(let email of errorNotificationContacts.email) {
+                contacts.add(email)
+              }
+            }
+          }
+
+          findInMenu(child)
+        })
+      }
+    }
+
+    findInMenu(viewer)
+  })
+
+  return contacts
+}

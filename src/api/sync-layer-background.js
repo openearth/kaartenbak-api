@@ -64,6 +64,37 @@ export const handler = withServerDefaults(async (event, _) => {
 
   const menuTree = buildMenuTree(menus)
 
+  try {
+    await syncLayers(menuTree, layerId)
+  }
+  catch(e) {
+    console.log('The following error occured', e.message)
+
+    for(let email of findEmailContactsForLayerId(menuTree, layerId)) {
+      console.log('Sending email to', email)
+
+      await mailjet.post('send', { version: 'v3.1' }).request({
+        Messages: [
+          {
+            From: {
+              Email: process.env.MAILJET_FROM_EMAIL,
+            },
+            To: [
+              {
+                Email: email,
+              },
+            ],
+            Subject: `Fout bij opslaan metadata voor laag ${layerId}`,
+            HTMLPart: e.message,
+          },
+        ],
+      })
+    }
+  }
+
+})
+
+async function syncLayers(menuTree, layerId) {
   const geonetworkInstances = findGeonetworkInstances(menuTree, layerId)
 
   const geonetworkInstancesArray = Array.from(geonetworkInstances)
@@ -128,48 +159,28 @@ export const handler = withServerDefaults(async (event, _) => {
   const errors = results.filter(result => result.status === 'rejected')
 
   if(errors.length) {
-    console.log(errors)
-
-    const messages = errors.map(error => `<li>${error.reason}</li>`)
-    const contacts = findEmailContactsForLayerId(menuTree, layerId)
-
-    for(let contact of contacts) {
-      await mailjet.post('send', { version: 'v3.1' }).request({
-        Messages: [
-          {
-            From: {
-              Email: process.env.MAILJET_FROM_EMAIL,
-            },
-            To: [
-              {
-                Email: contact.email,
-              },
-            ],
-            Subject: `Fout bij synchroniseren metadata voor laag ${layerId}`,
-            HTMLPart: `<p>Er ging iets Fout bij synchroniseren metadata voor laag:</p><ul>${ messages }</ul>`,
-          },
-        ],
-      })
-    }
+    const errorMessage = `<ul>${ errors.map(error => `<li>${error.reason}</li>`).join('') }</ul`
+    throw new Error(errorMessage)
   }
 
-})
+}
 
-
-export function findEmailContactsForLayerId(menuTree, layerId) {
+function findEmailContactsForLayerId(menuTree, layerId) {
   const contacts = new Set()
 
   menuTree.forEach((viewer) => {
+    
     const findInMenu = (menu) => {
       const { children } = menu
 
       if (children) {
         children.forEach((child) => {
+          
           if (child.id === layerId) {
             const { errorNotificationContacts } = viewer
 
-            if (errorNotificationContacts.email) {
-              for(let email of errorNotificationContacts.email) {
+            if (errorNotificationContacts.length) {
+              for(let {email} of errorNotificationContacts) {
                 contacts.add(email)
               }
             }

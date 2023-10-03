@@ -65,7 +65,7 @@ export const handler = withServerDefaults(async (event, _) => {
   const menuTree = buildMenuTree(menus)
 
   try {
-    await syncLayers(menuTree, layerId)
+    await syncLayers(menuTree, layerData, layerId)
   }
   catch(e) {
     console.log('The following error occured', e.message)
@@ -94,7 +94,7 @@ export const handler = withServerDefaults(async (event, _) => {
 
 })
 
-async function syncLayers(menuTree, layerId) {
+async function syncLayers(menuTree, layerData, layerId) {
   const geonetworkInstances = findGeonetworkInstances(menuTree, layerId)
 
   const geonetworkInstancesArray = Array.from(geonetworkInstances)

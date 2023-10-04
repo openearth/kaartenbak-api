@@ -120,10 +120,6 @@ export async function fetchLayerXML({ id }) {
     (layer) => layer.Name._text === data.layer.layer
   )
 
-  if(!layerInfo) {
-    throw new Error(`Can't find layer with name ${data.layer.layer}`)
-  }
-
   let formatted = null
 
   if (data.layer.useFactsheetAsMetadata) {

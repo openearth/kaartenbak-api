@@ -15,9 +15,8 @@ dotenv.config({
 import { datocmsRequest } from '../lib/datocms.js'
 import { buildMenuTree } from '../lib/build-menu-tree.js'
 
-import { findDeadLayerLinks } from '../lib/find-dead-layer-links.js'
-import { filterDeadLayerLinks } from '../lib/filter-dead-layer-links.js'
-import { getViewersPerContact } from '../lib/get-viewers-per-contact.js'
+import { getViewerAndLayers } from '../lib/find-dead-layer-links.js'
+import { getWmsCapabilities } from '../lib/get-capabilities.js'
 
 const mailjet = new Mailjet({
   apiKey: process.env.MAILJET_API_TOKEN,
@@ -47,6 +46,12 @@ query viewersWithLayers ($first: IntType, $skip: IntType = 0) {
   }
 }`
 
+function timeout(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
+}
+
 async function report() {
   try {
     const { menus } = await datocmsRequest({
@@ -55,13 +60,70 @@ async function report() {
 
     const menuTree = buildMenuTree(menus)
 
-    const deadLayerLinks = await findDeadLayerLinks(menuTree)
+    const checkedUrls = new Set()
+    const reportsPerEmail = {}
 
-    const filteredDeadLayerLinks = filterDeadLayerLinks(deadLayerLinks)
+    for(let {viewer, layers} of getViewerAndLayers(menuTree)) {
+      const deadLayers = []
 
-    const viewersPerContact = getViewersPerContact(filteredDeadLayerLinks)
+      for(let layer of layers) {
+        // url was already checked skip it
+        if(checkedUrls.has(layer.url)) {
+          console.log(`Already checked ${layer.id} so skipping...`)
+          continue
+        }
+  
+        checkedUrls.add(layer.url)
 
-    for (const [email, viewers] of viewersPerContact) {
+        console.log(`Checking ${layer.id}...`)
+
+        const { linkIsDead } = await getWmsCapabilities(
+          layer.url
+        )
+  
+        if(linkIsDead) {
+          console.log(`${layer.url} is unreachable...`)
+          deadLayers.push(layer)
+          break
+        }
+      }
+
+      if(!deadLayers.length) {
+        continue
+      }
+
+      /**
+       * Group the reports by email so that it looks something like this:
+       * 
+       * {
+       *    "admin@deltares.nl": {
+       *       "viewerName": [
+       *        deadLayer1,
+       *        deadLayer2
+       *      ]
+       *    }
+       * }
+       * 
+       */
+      for(let { email } of viewer.deadLinksReportContacts) {
+        if(!reportsPerEmail[email]) {
+          reportsPerEmail[email] = {}
+        }
+
+        if(!reportsPerEmail[email][viewer.name]) {
+          reportsPerEmail[email][viewer.name] = []
+        }
+
+        reportsPerEmail[email][viewer.name].push(...deadLayers)
+      }
+      
+
+      await timeout(2000) // TODO tweak this timeout
+    }
+
+    for (const [email, viewers] of Object.entries(reportsPerEmail)) {
+      console.log(`Sending email to ${email}`)
+
       await mailjet.post('send', { version: 'v3.1' }).request({
         Messages: [
           {
@@ -89,7 +151,8 @@ async function report() {
         ],
       })
     }
-  } catch (err) {
+  }
+  catch (err) {
     console.error(err)
   }
 }

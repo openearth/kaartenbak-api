@@ -14,6 +14,48 @@ function fetchWmsLayer(url) {
   }).catch(() => true)
 }
 
+export function* traverseMenuLayers(menuTree, topMostViewer = null) {
+  for (const menu of menuTree) {
+    //const menuContacts = [...contacts, ...menu.deadLinksReportContacts ?? []]
+
+    if(menu.layer) {
+      yield {
+        name: menu.name,
+        url: menu.url,
+        layer: menu.layer,
+        viewer: topMostViewer,
+      }
+    } else if(menu.children) {
+      yield* traverseMenuLayers(menu.children, topMostViewer ?? menu)
+    }
+  }
+}
+
+export function getViewerAndLayers(menuTree) {
+  const viewers = []
+
+  function recursivelyFindLayers(menuTree) {
+    return menuTree.reduce((layers, menu) => {
+      if(menu.layer) {
+        return [...layers, menu]
+      } else if(menu.children) {
+        return [...layers, ...recursivelyFindLayers(menu.children)]
+      }
+    }, [])
+  }
+
+  for(const viewer of menuTree) {
+    const item = {
+      viewer,
+      layers: recursivelyFindLayers(viewer.children)
+    }
+
+    viewers.push(item)
+  }
+
+  return viewers
+}
+
 export async function findDeadLayerLinks(menuTree) {
   const findInMenu = async (menus) => {
     const menuItems = []

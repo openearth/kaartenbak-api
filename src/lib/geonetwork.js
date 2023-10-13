@@ -1,5 +1,13 @@
 import fetch from 'node-fetch'
 
+class GeoNetworkError extends Error {
+  constructor(description, error) {
+    super(`${description}\n\n${JSON.stringify(error, null, 2)}`)
+
+    this.code = error.code
+  }
+}
+
 export class Geonetwork {
   #baseUrl
   #username
@@ -46,6 +54,11 @@ export class Geonetwork {
         ...headers,
       },
     }).then(async (res) => {
+      if(!res.ok) {
+        const error = await res.json()
+        throw new GeoNetworkError(`Error while posting to ${url}`, error)
+      }
+
       if (options.responseText) {
         return res.text()
       }

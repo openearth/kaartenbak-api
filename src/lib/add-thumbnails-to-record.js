@@ -13,13 +13,21 @@ export async function addThumbnailsToRecord(thumbnails, recordId, geonetwork) {
     })
   )
 
-  const attachments = await geonetwork.recordsRequest({
-    url: `/${recordId}/attachments`,
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  })
+  let attachments = []
+  try {
+    attachments = await geonetwork.recordsRequest({
+      url: `/${recordId}/attachments`,
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+  }
+  catch(e) {
+    if(e.code !== 'resource_not_found') {
+      throw e
+    }
+  }
 
   for (const attachment of attachments) {
     await geonetwork.recordsRequest({
@@ -31,13 +39,15 @@ export async function addThumbnailsToRecord(thumbnails, recordId, geonetwork) {
     })
   }
 
-  await geonetwork.recordsRequest({
-    url: `/${recordId}/attachments`,
-    method: 'DELETE',
-    options: {
-      responseText: true,
-    },
-  })
+  if(attachments.length > 0) {
+    await geonetwork.recordsRequest({
+      url: `/${recordId}/attachments`,
+      method: 'DELETE',
+      options: {
+        responseText: true,
+      },
+    })
+  }
 
   for (const form of forms) {
     const attachment = await geonetwork.recordsRequest({

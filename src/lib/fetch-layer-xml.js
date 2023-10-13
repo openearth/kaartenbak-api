@@ -93,6 +93,27 @@ query LayerById($id: ItemId) {
 }
 `
 
+function recursivelyFindLayer(layers, name) {
+  const layerList = Array.isArray(layers)
+    ? layers
+    : [layers]
+
+  for(let layer of layerList) {
+    if(layer.Name && layer.Name._text === name) {
+      return layer
+    }
+    
+    if(layer.Layer) {
+      const foundLayer = recursivelyFindLayer(layer.Layer, name)
+      if(foundLayer) { 
+        return foundLayer
+      }
+    }
+  }
+
+  return null
+}
+
 export async function fetchLayerXML({ id }) {
   const data = await datocmsRequest({ query, variables: { id } })
 
@@ -112,13 +133,7 @@ export async function fetchLayerXML({ id }) {
     })
   )
 
-  const layers = Array.isArray(capabilities.WMS_Capabilities.Capability.Layer.Layer)
-    ? capabilities.WMS_Capabilities.Capability.Layer.Layer
-    : [capabilities.WMS_Capabilities.Capability.Layer.Layer]
-
-  const layerInfo = layers.find(
-    (layer) => layer.Name._text === data.layer.layer
-  )
+  const layerInfo = recursivelyFindLayer(capabilities.WMS_Capabilities.Capability.Layer, data.layer.layer)
 
   let formatted = null
 

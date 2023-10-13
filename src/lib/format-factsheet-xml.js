@@ -302,9 +302,10 @@ export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
           : ''
       }
       <gmd:supplementalInformation>
-        <gco:CharacterString>${
+        <gco:CharacterString>
+          <![CDATA[${
           factsheet.titelNaamMeetMonitorprogramma
-        } - ${xmlEscape(factsheet.urlOriginalFile)} - ${
+        } - ${factsheet.urlOriginalFile} - ${
   factsheet.naamAansturendeOrganisatie
 } - ${factsheet.datumVoltooiing} - ${
   factsheet.doelWaarvoorDataWordenVerzameld
@@ -318,7 +319,7 @@ export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
   factsheet.soortDataset
 } - ${factsheet.kostenOpJaarbasis} - ${factsheet.soortenoverzicht} - ${
   factsheet.habitats
-} - ${formatKeywords(layer.indexableWfsProperties)}</gco:CharacterString>
+} - ${formatKeywords(layer.indexableWfsProperties)}]]></gco:CharacterString>
       </gmd:supplementalInformation>
     </gmd:MD_DataIdentification>
   </gmd:identificationInfo>

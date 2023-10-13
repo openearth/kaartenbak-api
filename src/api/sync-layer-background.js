@@ -164,7 +164,7 @@ async function syncLayers(menuTree, eventType, layerId) {
   const errors = results.filter(result => result.status === 'rejected')
 
   if(errors.length) {
-    const errorMessage = `<ul>${ errors.map(error => `<li>${error.reason}</li>`).join('') }</ul`
+    const errorMessage = `<ul>${ errors.map(error => `<li>${error.reason}</li>`).join('') }</ul>`
     throw new Error(errorMessage)
   }
 

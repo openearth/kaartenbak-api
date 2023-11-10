@@ -118,7 +118,11 @@ export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
       </gmd:citation>
       <!-- TG Requirement C.9: metadata/2.0/req/common/resource-abstract: A non-empty brief narrative summary of the content of the described data set, data set series or service shall be provided. It shall be encoded using the gmd:abstract element with a Non-empty Free Text Element content in the language of the metadata. The multiplicity of this element is 1. -->
       <gmd:abstract>
-        <gco:CharacterString>${factsheet.samenvatting}</gco:CharacterString>
+        <gco:CharacterString>
+            <![CDATA[
+              ${factsheet.samenvatting}
+            ]]>
+        </gco:CharacterString>
       </gmd:abstract>
 
       <gmd:status>
@@ -136,7 +140,11 @@ export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
       <gmd:pointOfContact>
         <gmd:CI_ResponsibleParty>
           <gmd:organisationName>
-            <gco:CharacterString>${item.organisationName}</gco:CharacterString>
+            <gco:CharacterString>
+              <![CDATA[
+                ${item.organisationName}
+              ]]>
+            </gco:CharacterString>
           </gmd:organisationName>
           <gmd:contactInfo>
             <gmd:CI_Contact>
@@ -169,7 +177,11 @@ export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
             .map(
               (thema) =>
                 `<gmd:keyword>
-                  <gco:CharacterString>${thema.title}</gco:CharacterString>
+                  <gco:CharacterString>
+                    <![CDATA[
+                    ${thema.title}
+                    ]]>
+                  </gco:CharacterString>
                 </gmd:keyword>`
             )
             .join('')}
@@ -226,9 +238,11 @@ export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
       <gmd:resourceConstraints>
         <gmd:MD_LegalConstraints>
           <gmd:useLimitation>
-            <gco:CharacterString>${
-              factsheet.gebruiksbeperkingen
-            }</gco:CharacterString>
+            <gco:CharacterString>
+              <![CDATA[
+                ${factsheet.gebruiksbeperkingen}
+              ]]>
+            </gco:CharacterString>
           </gmd:useLimitation>
         </gmd:MD_LegalConstraints>
       </gmd:resourceConstraints>
@@ -404,9 +418,11 @@ export const format = ({ id, layerInfo, layer, factsheet }) => /* xml */ `
       <gmd:lineage>
         <gmd:LI_Lineage>
           <gmd:statement>
-            <gco:CharacterString>${
-              factsheet.algemeneBeschrijvingVanHerkomst
-            }</gco:CharacterString>
+            <gco:CharacterString>
+              <![CDATA[
+                ${ factsheet.algemeneBeschrijvingVanHerkomst}
+              ]]>
+            </gco:CharacterString>
           </gmd:statement>
         </gmd:LI_Lineage>
       </gmd:lineage>

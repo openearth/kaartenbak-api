@@ -3,8 +3,8 @@ import { withServerDefaults } from '../lib/with-server-defaults'
 import { buildChildrenTree } from '../lib/build-children-tree'
 
 const datocmsQuery = /* graphql */ `
-query Layers ($first: IntType, $skip: IntType = 0) {
-  menus: allMenus(first: $first, skip: $skip) {
+query Layers ($first: IntType, $skip: IntType = 0, $locale: SiteLocale = nl) {
+  menus: allMenus(first: $first, skip: $skip, locale: $locale) {
     id
     name
     children: layers {

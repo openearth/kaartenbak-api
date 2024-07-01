@@ -18,8 +18,8 @@ const feedbackContactFragment = `
 const viewersWithLayersQuery = /* graphql */ `
 ${feedbackContactFragment}
 
-query viewersWithLayers ($first: IntType, $skip: IntType = 0) {
-  menus: allMenus(first: $first, skip: $skip) {
+query viewersWithLayers ($first: IntType, $skip: IntType = 0, $locale: SiteLocale = nl) {
+  menus: allMenus(first: $first, skip: $skip, locale: $locale) {
     id
     name
     feedbackContacts {

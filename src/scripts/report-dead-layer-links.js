@@ -2,6 +2,7 @@ import path, { dirname } from 'path'
 import dotenv from 'dotenv'
 import { fileURLToPath } from 'url'
 import Mailjet from 'node-mailjet'
+import { formatMenusRecursive } from '../lib/format-menu'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -32,11 +33,13 @@ query viewersWithLayers ($first: IntType, $skip: IntType = 0) {
     deadLinksReportContacts {
       email
     }
-    children: layers {
-      id
-      name
-      url
-      layer
+    children: viewerLayers {
+      layer {
+        id
+        name
+        url
+        layer
+      }
     }
     parent {
       id
@@ -52,8 +55,9 @@ async function report() {
     const { menus } = await datocmsRequest({
       query: viewersWithLayersQuery,
     })
+    const formattedMenus = formatMenusRecursive(menus)
 
-    const menuTree = buildMenuTree(menus)
+    const menuTree = buildMenuTree(formattedMenus)
 
     const deadLayerLinks = await findDeadLayerLinks(menuTree)
 

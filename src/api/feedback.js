@@ -1,6 +1,7 @@
 import { datocmsRequest } from '../lib/datocms'
 import { withServerDefaults } from '../lib/with-server-defaults'
 import { buildMenuTree } from '../lib/build-menu-tree'
+import { formatMenusRecursive } from '../lib/format-menu'
 import * as EmailValidator from 'email-validator'
 import Mailjet from 'node-mailjet'
 
@@ -25,11 +26,13 @@ query viewersWithLayers ($first: IntType, $skip: IntType = 0) {
     feedbackContacts {
       ...FeedbackContact
     }
-    children: layers {
-      id
-      name
-      feedbackContacts {
-        ...FeedbackContact
+    children: viewerLayers {
+      layer {
+        id
+        name
+        feedbackContacts {
+          ...FeedbackContact
+        }
       }
     }
     parent {
@@ -117,8 +120,9 @@ export const handler = withServerDefaults(async (event, _) => {
   }
 
   const { menus } = await datocmsRequest({ query: viewersWithLayersQuery })
+  const formattedMenus = formatMenusRecursive(menus)
 
-  const menuTree = buildMenuTree(menus)
+  const menuTree = buildMenuTree(formattedMenus)
 
   const viewer = menuTree.find((viewer) => viewer.name === viewerName)
 

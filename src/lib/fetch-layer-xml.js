@@ -6,8 +6,8 @@ import fetch from 'node-fetch'
 import convert from 'xml-js'
 
 const query = /* graphql */ `
-query LayerById {
-  layer(filter: {inspireMetadata: { exists:true }}) {
+query LayerById($id: ItemId) {
+  layer(filter: {id: {eq: $id}}) {
     name
     url
     layer

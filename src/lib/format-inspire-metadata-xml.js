@@ -124,11 +124,9 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
       </gmd:citation>
       <!-- TG Requirement C.9: metadata/2.0/req/common/resource-abstract: A non-empty brief narrative summary of the content of the described data set, data set series or service shall be provided. It shall be encoded using the gmd:abstract element with a Non-empty Free Text Element content in the language of the metadata. The multiplicity of this element is 1. -->
       <gmd:abstract>
-        <gco:CharacterString>
-          ${ layer.inspireMetadata.abstract}
-          
-          ${ layer.inspireMetadata.description}
-        </gco:CharacterString>
+        <gco:CharacterString>${
+          layer.inspireMetadata.abstract}${layer.inspireMetadata.description ? ` - ${layer.inspireMetadata.description}` : ''
+        }</gco:CharacterString>
       </gmd:abstract>
 
       <gmd:status>
@@ -224,12 +222,6 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
               layer.inspireMetadata.resourceconstraintsUseconstraints
             }"/>
           </gmd:useConstraints>
-          <gmd:otherConstraints>
-            <!-- TODO: what about this? -->
-            <gmx:Anchor xlink:href="http://inspire.ec.europa.eu/metadata-codelist/ConditionsApplyingToAccessAndUse/noConditionsApply">${
-              layer.inspireMetadata.otherconstraints
-            }</gmx:Anchor>
-          </gmd:otherConstraints>
         </gmd:MD_LegalConstraints>
       </gmd:resourceConstraints>
       <!-- TG Requirement C.17: metadata/2.0/req/common/limitations-on-public-access: Limitations on public access (or lack of such limitations) for the described resource shall be described using exactly one gmd:resourceConstraints/gmd:MD_LegalConstraints element. This element shall not be the same one as used for describing conditions applying to access and use (see 2.4.7).
@@ -241,12 +233,6 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
               layer.inspireMetadata.resourceconstraintsAccessconstraints
             }"/>
           </gmd:accessConstraints>
-          <gmd:otherConstraints>
-            <!-- TODO: what about this? -->
-            <gmx:Anchor xlink:href="http://inspire.ec.europa.eu/metadata-codelist/LimitationsOnPublicAccess/INSPIRE_Directive_Article13_1d">${
-              layer.inspireMetadata.otherconstraints
-            }</gmx:Anchor>
-          </gmd:otherConstraints>
         </gmd:MD_LegalConstraints>
       </gmd:resourceConstraints>
 

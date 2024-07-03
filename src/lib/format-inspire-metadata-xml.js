@@ -26,21 +26,25 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
   <gmd:contact>
     <gmd:CI_ResponsibleParty>
       <gmd:organisationName>
-        <gco:CharacterString>Deltares</gco:CharacterString>
+        <gco:CharacterString>${
+          layer.inspireMetadata.organisationname
+        }</gco:CharacterString>
       </gmd:organisationName>
       <gmd:contactInfo>
         <gmd:CI_Contact>
           <gmd:address>
             <gmd:CI_Address>
               <gmd:electronicMailAddress>
-                <gco:CharacterString>deltaresdata@deltares.nl</gco:CharacterString>
+                <gco:CharacterString>${
+                  layer.inspireMetadata.electronicmailaddress
+                }</gco:CharacterString>
               </gmd:electronicMailAddress>
             </gmd:CI_Address>
           </gmd:address>
         </gmd:CI_Contact>
       </gmd:contactInfo>
       <gmd:role>
-        <gmd:CI_RoleCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_RoleCode" codeListValue="pointOfContact" />
+        <gmd:CI_RoleCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_RoleCode" codeListValue="${layer.inspireMetadata.role}" />
       </gmd:role>
     </gmd:CI_ResponsibleParty>
   </gmd:contact>
@@ -51,11 +55,15 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
   </gmd:dateStamp>
 
   <gmd:metadataStandardName>
-    <gco:CharacterString>ISO 19115</gco:CharacterString>
+    <gco:CharacterString>${
+      layer.inspireMetadata.metadatastandardname
+    }</gco:CharacterString>
   </gmd:metadataStandardName>
 
   <gmd:metadataStandardVersion>
-    <gco:CharacterString>Nederlands metadata profiel op ISO 19115 voor geografie 2.0</gco:CharacterString>
+    <gco:CharacterString>${
+      layer.inspireMetadata.metadatastandardversion
+    }</gco:CharacterString>
   </gmd:metadataStandardVersion>
 
   ${
@@ -116,9 +124,11 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
       </gmd:citation>
       <!-- TG Requirement C.9: metadata/2.0/req/common/resource-abstract: A non-empty brief narrative summary of the content of the described data set, data set series or service shall be provided. It shall be encoded using the gmd:abstract element with a Non-empty Free Text Element content in the language of the metadata. The multiplicity of this element is 1. -->
       <gmd:abstract>
-        <gco:CharacterString>${
-          layer.inspireMetadata.abstract
-        }</gco:CharacterString>
+        <gco:CharacterString>
+          ${ layer.inspireMetadata.abstract}
+          
+          ${ layer.inspireMetadata.description}
+        </gco:CharacterString>
       </gmd:abstract>
 
       <gmd:status>
@@ -176,15 +186,22 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
           <gmd:thesaurusName>
             <gmd:CI_Citation>
               <gmd:title>
-                <gmx:Anchor xlink:href="http://www.eionet.europa.eu/gemet/inspire_themes">GEMET - INSPIRE themes, version 1.0</gmx:Anchor>
+                <!-- TODO: url? -->
+                <gmx:Anchor xlink:href="http://www.eionet.europa.eu/gemet/inspire_themes">${
+                  layer.inspireMetadata.thesaurusname
+                }</gmx:Anchor>
               </gmd:title>
               <gmd:date>
                 <gmd:CI_Date>
                   <gmd:date>
-                    <gco:Date>2008-06-01</gco:Date>
+                    <gco:Date>${
+                      layer.inspireMetadata.thesaurusdatum
+                    }</gco:Date>
                   </gmd:date>
                   <gmd:dateType>
-                    <gmd:CI_DateTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_DateTypeCode" codeListValue="publication">Publication</gmd:CI_DateTypeCode>
+                    <gmd:CI_DateTypeCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#CI_DateTypeCode" codeListValue="publication">${
+                      layer.inspireMetadata.thesaurusdatumType
+                    }</gmd:CI_DateTypeCode>
                   </gmd:dateType>
                 </gmd:CI_Date>
               </gmd:date>
@@ -203,10 +220,15 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
       <gmd:resourceConstraints>
         <gmd:MD_LegalConstraints>
           <gmd:useConstraints>
-            <gmd:MD_RestrictionCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_RestrictionCode" codeListValue="otherRestrictions"/>
+            <gmd:MD_RestrictionCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_RestrictionCode" codeListValue="${
+              layer.inspireMetadata.resourceconstraintsUseconstraints
+            }"/>
           </gmd:useConstraints>
           <gmd:otherConstraints>
-            <gmx:Anchor xlink:href="http://inspire.ec.europa.eu/metadata-codelist/ConditionsApplyingToAccessAndUse/noConditionsApply">Geen condities voor toegang en gebruik</gmx:Anchor>
+            <!-- TODO: what about this? -->
+            <gmx:Anchor xlink:href="http://inspire.ec.europa.eu/metadata-codelist/ConditionsApplyingToAccessAndUse/noConditionsApply">${
+              layer.inspireMetadata.otherconstraints
+            }</gmx:Anchor>
           </gmd:otherConstraints>
         </gmd:MD_LegalConstraints>
       </gmd:resourceConstraints>
@@ -215,10 +237,15 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
       <gmd:resourceConstraints>
         <gmd:MD_LegalConstraints>
           <gmd:accessConstraints>
-            <gmd:MD_RestrictionCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_RestrictionCode" codeListValue="otherRestrictions"/>
+            <gmd:MD_RestrictionCode codeList="http://standards.iso.org/iso/19139/resources/gmxCodelists.xml#MD_RestrictionCode" codeListValue="${
+              layer.inspireMetadata.resourceconstraintsAccessconstraints
+            }"/>
           </gmd:accessConstraints>
           <gmd:otherConstraints>
-            <gmx:Anchor xlink:href="http://inspire.ec.europa.eu/metadata-codelist/LimitationsOnPublicAccess/INSPIRE_Directive_Article13_1d">Public access to spatial data sets and services would adversely affect the confidentiality of commercial or industrial information, where such confidentiality is provided for by national or Community law to protect a legitimate economic interest, including the public interest in maintaining statistical confidentiality and tax secrecy.</gmx:Anchor>
+            <!-- TODO: what about this? -->
+            <gmx:Anchor xlink:href="http://inspire.ec.europa.eu/metadata-codelist/LimitationsOnPublicAccess/INSPIRE_Directive_Article13_1d">${
+              layer.inspireMetadata.otherconstraints
+            }</gmx:Anchor>
           </gmd:otherConstraints>
         </gmd:MD_LegalConstraints>
       </gmd:resourceConstraints>
@@ -227,7 +254,7 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
         <gmd:MD_LegalConstraints>
           <gmd:useLimitation>
             <gco:CharacterString>${
-              layer.inspireMetadata.resourceconstraintsUselimitation
+              layer.inspireMetadata.resourceconstraintsUseconstraints
             }</gco:CharacterString>
           </gmd:useLimitation>
         </gmd:MD_LegalConstraints>
@@ -243,10 +270,8 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
           <gmd:equivalentScale>
             <gmd:MD_RepresentativeFraction>
               <gmd:denominator>
-                <gco:Integer>${
-                  layer.inspireMetadata
-                    .spatialresolutionEquivalentscaleDenominator
-                }</gco:Integer>
+                <!-- TODO: is this correct? -->
+                <gco:Integer>None</gco:Integer>
               </gmd:denominator>
             </gmd:MD_RepresentativeFraction>
           </gmd:equivalentScale>

@@ -6,8 +6,8 @@ import fetch from 'node-fetch'
 import convert from 'xml-js'
 
 const query = /* graphql */ `
-query LayerById($id: ItemId) {
-  layer(filter: {id: {eq: $id}}) {
+query LayerById {
+  layer(filter: {inspireMetadata: { exists:true }}) {
     name
     url
     layer
@@ -18,6 +18,9 @@ query LayerById($id: ItemId) {
         citationTitle
         citationDateDate
         citationDateDatetype
+      	electronicmailaddress
+      	role
+      	organisationname
         abstract
         identificationinfoStatus
         topiccategories {
@@ -26,12 +29,17 @@ query LayerById($id: ItemId) {
         descriptivekeywordsKeywords {
           title
         }
-        resourceconstraintsUselimitation
-        resourceconstraintsAccessconstraints
-        spatialresolutionEquivalentscaleDenominator
-        referencesystemidentifierCode
+      	resourceconstraintsAccessconstraints
+        resourceconstraintsUseconstraints
+      	mdSpatialrepresentationtypecode
+      	thesaurusname
+      	thesaurusdatum
+      	thesaurusdatumType
+        resourceconstraintsUseconstraints
         hierarchylevel
         lineageStatement
+        metadatastandardname
+      	metadatastandardversion
         links {
           protocol
           url

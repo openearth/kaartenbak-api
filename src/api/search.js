@@ -1,17 +1,20 @@
 import { datocmsRequest } from '../lib/datocms'
 import { withServerDefaults } from '../lib/with-server-defaults'
 import { buildChildrenTree } from '../lib/build-children-tree'
+import { formatMenusRecursive } from '../lib/format-menu'
 
 const datocmsQuery = /* graphql */ `
 query Layers ($first: IntType, $skip: IntType = 0, $locale: SiteLocale = nl) {
   menus: allMenus(first: $first, skip: $skip, locale: $locale) {
     id
     name
-    children: layers {
-      id
-      name
-      description
-      indexableWfsProperties
+    children: viewerLayers {
+      layer {
+        id
+        name
+        description
+        indexableWfsProperties
+      }
     }
     parent {
       id
@@ -88,10 +91,11 @@ export const handler = withServerDefaults(async (event, _) => {
   }
 
   const { menus } = await datocmsRequest({ query: datocmsQuery })
+  const formattedMenus = formatMenusRecursive(menus)
 
-  buildChildrenTree(menus)
+  buildChildrenTree(formattedMenus)
 
-  const menu = menus.find((menu) => menu.name === viewer)
+  const menu = formattedMenus.find((menu) => menu.name === viewer)
 
   if (!menu) {
     return {

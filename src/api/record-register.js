@@ -3,6 +3,7 @@ import { withServerDefaults } from '../lib/with-server-defaults'
 import { Geonetwork } from '../lib/geonetwork'
 import { resourceNotFound } from '../lib/constants'
 import { buildMenuTree } from '../lib/build-menu-tree'
+import { formatMenusRecursive } from '../lib/format-menu'
 import { findGeonetworkInstances } from '../lib/find-geonetwork-instances'
 
 const geonetworkUrl = 'geonetwork/srv'
@@ -17,8 +18,10 @@ query viewersWithLayers ($first: IntType, $skip: IntType = 0, $locale: SiteLocal
       username
       password
     }
-    children: layers {
-      id
+    children: viewerLayers {
+      layer {
+        id
+      }
     }
     parent {
       id
@@ -47,8 +50,9 @@ export const handler = withServerDefaults(async (event, _) => {
   }
 
   const { menus } = await datocmsRequest({ query: viewersWithLayersQuery })
+  const formattedMenus = formatMenusRecursive(menus)
 
-  const menuTree = buildMenuTree(menus)
+  const menuTree = buildMenuTree(formattedMenus)
 
   const menu = menuTree.find((menu) => menu.name === viewer)
 

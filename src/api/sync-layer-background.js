@@ -5,6 +5,7 @@ import { withServerDefaults } from '../lib/with-server-defaults'
 import { buildMenuTree } from '../lib/build-menu-tree'
 import { findGeonetworkInstances } from '../lib/find-geonetwork-instances'
 import { fetchLayerXML } from '../lib/fetch-layer-xml'
+import { formatMenusRecursive } from '../lib/format-menu'
 import Mailjet from 'node-mailjet'
 
 const mailjet = new Mailjet({
@@ -24,8 +25,10 @@ query viewersWithLayers ($first: IntType, $skip: IntType = 0, $locale: SiteLocal
     errorNotificationContacts {
       email
     }
-    children: layers {
-      id
+    children: viewerLayers {
+      layers {
+        id
+      }
     }
     parent {
       id
@@ -61,8 +64,8 @@ export const handler = withServerDefaults(async (event, _) => {
   const { menus } = await datocmsRequest({
     query: viewersWithLayersQuery,
   })
-
-  const menuTree = buildMenuTree(menus)
+  const formattedMenus = formatMenusRecursive(menus)
+  const menuTree = buildMenuTree(formattedMenus)
 
   try {
     await syncLayers(menuTree, layerData.event_type, layerId)
@@ -181,7 +184,7 @@ function findEmailContactsForLayerId(menuTree, layerId) {
       if (children) {
         children.forEach((child) => {
           
-          if (child.id === layerId) {
+          if (child.layer.id === layerId) {
             const { errorNotificationContacts } = viewer
 
             if (errorNotificationContacts.length) {

@@ -7,46 +7,42 @@ import convert from 'xml-js'
 
 const query = /* graphql */ `
 query LayerById($id: ItemId) {
-  layer(filter: {id: {eq: $id}}) {
-    name
-    url
-    layer
+  viewerLayer(filter: {layer: {eq: $id}}) {
     useFactsheetAsMetadata
-    indexableWfsProperties
     inspireMetadata {
-        _updatedAt
-        citationTitle
-        citationDateDate
-        citationDateDatetype
-      	electronicmailaddress
-      	role
-      	organisationname
-        abstract
-        identificationinfoStatus
-        topiccategories {
-          topicCategoryItem
-        }
-        descriptivekeywordsKeywords {
-          title
-        }
-      	resourceconstraintsAccessconstraints
-        resourceconstraintsUseconstraints
-      	mdSpatialrepresentationtypecode
-      	thesaurusname
-      	thesaurusdatum
-      	thesaurusdatumType
-        resourceconstraintsUseconstraints
-        hierarchylevel
-        lineageStatement
-        metadatastandardname
-      	metadatastandardversion
-        links {
-          protocol
-          url
-          name
-          description
-        }
+      _updatedAt
+      citationTitle
+      citationDateDate
+      citationDateDatetype
+      electronicmailaddress
+      role
+      organisationname
+      abstract
+      identificationinfoStatus
+      topiccategories {
+        topicCategoryItem
       }
+      descriptivekeywordsKeywords {
+        title
+      }
+      resourceconstraintsAccessconstraints
+      resourceconstraintsUseconstraints
+      mdSpatialrepresentationtypecode
+      thesaurusname
+      thesaurusdatum
+      thesaurusdatumType
+      resourceconstraintsUseconstraints
+      hierarchylevel
+      lineageStatement
+      metadatastandardname
+      metadatastandardversion
+      links {
+        protocol
+        url
+        name
+        description
+      }
+    }
     factsheets {
       _updatedAt
       id
@@ -97,6 +93,12 @@ query LayerById($id: ItemId) {
       email
       rol
     }
+    layer {
+      name
+      url
+      layer
+      indexableWfsProperties
+    }
   }
 }
 `
@@ -123,7 +125,19 @@ function recursivelyFindLayer(layers, name) {
 }
 
 export async function fetchLayerXML({ id }) {
-  const data = await datocmsRequest({ query, variables: { id } })
+  const { viewerLayer: {
+    layer,
+    ...viewerLayer
+  } } = await datocmsRequest({ query, variables: { id } })
+
+  console.log(layer)
+
+  const data = {
+    layer: {
+      ...layer,
+      ...viewerLayer,
+    }
+  }
 
   const getCapabilitiesUrl = `${data.layer.url}?service=WMS&request=GetCapabilities`
 

@@ -104,7 +104,11 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
       <gmd:citation>
         <gmd:CI_Citation>
           <gmd:title>
-            <gco:CharacterString>${layer.name}</gco:CharacterString>
+            <gco:CharacterString>
+              <![CDATA[
+                ${layer.name}
+              ]]>
+            </gco:CharacterString>
           </gmd:title>
           <gmd:date>
             <gmd:CI_Date>
@@ -124,9 +128,10 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
       </gmd:citation>
       <!-- TG Requirement C.9: metadata/2.0/req/common/resource-abstract: A non-empty brief narrative summary of the content of the described data set, data set series or service shall be provided. It shall be encoded using the gmd:abstract element with a Non-empty Free Text Element content in the language of the metadata. The multiplicity of this element is 1. -->
       <gmd:abstract>
-        <gco:CharacterString>${
-          layer.inspireMetadata.abstract}${layer.inspireMetadata.description ? ` - ${layer.inspireMetadata.description}` : ''
-        }</gco:CharacterString>
+        <gco:CharacterString>
+          <![CDATA[
+          ${layer.inspireMetadata.abstract}${layer.inspireMetadata.description ? ` - ${layer.inspireMetadata.description}` : ''}
+          ]]></gco:CharacterString>
       </gmd:abstract>
 
       <gmd:status>
@@ -144,7 +149,11 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
       <gmd:pointOfContact>
         <gmd:CI_ResponsibleParty>
           <gmd:organisationName>
-            <gco:CharacterString>${item.organisationName}</gco:CharacterString>
+            <gco:CharacterString>
+              <![CDATA[
+                ${item.organisationName}
+              ]]>
+            </gco:CharacterString>
           </gmd:organisationName>
           <gmd:contactInfo>
             <gmd:CI_Contact>
@@ -177,14 +186,17 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
             .map(
               (keyword) =>
                 `<gmd:keyword>
-                  <gco:CharacterString>${keyword.title}</gco:CharacterString>
+                  <gco:CharacterString>
+                    <![CDATA[
+                      ${keyword.title}
+                    ]]>
+                  </gco:CharacterString>
                 </gmd:keyword>`
             )
             .join('')}
           <gmd:thesaurusName>
             <gmd:CI_Citation>
               <gmd:title>
-                <!-- TODO: url? -->
                 <gmx:Anchor xlink:href="http://www.eionet.europa.eu/gemet/inspire_themes">${
                   layer.inspireMetadata.thesaurusname
                 }</gmx:Anchor>
@@ -256,7 +268,6 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
           <gmd:equivalentScale>
             <gmd:MD_RepresentativeFraction>
               <gmd:denominator>
-                <!-- TODO: is this correct? -->
                 <gco:Integer>None</gco:Integer>
               </gmd:denominator>
             </gmd:MD_RepresentativeFraction>
@@ -398,9 +409,11 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
       <gmd:lineage>
         <gmd:LI_Lineage>
           <gmd:statement>
-            <gco:CharacterString>${
-              layer.inspireMetadata.lineageStatement
-            }</gco:CharacterString>
+            <gco:CharacterString>
+              <![CDATA[
+                ${layer.inspireMetadata.lineageStatement}
+              ]]>
+            </gco:CharacterString>
           </gmd:statement>
         </gmd:LI_Lineage>
       </gmd:lineage>

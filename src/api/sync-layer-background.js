@@ -26,7 +26,7 @@ query viewersWithLayers ($first: IntType, $skip: IntType = 0, $locale: SiteLocal
       email
     }
     children: viewerLayers {
-      layers {
+      layer {
         id
       }
     }

@@ -102,8 +102,6 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
 
   const geonetworkInstancesArray = Array.from(geonetworkInstances)
 
-  console.log(geonetworkInstancesArray)
-
   const xml = await fetchViewerLayerXML({ id: viewerLayerId })
 
   // Can occur when no update needs to be done (because there is no factsheet or inspireMetadata)

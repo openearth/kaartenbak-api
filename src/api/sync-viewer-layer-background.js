@@ -59,7 +59,7 @@ export const handler = withServerDefaults(async (event, _) => {
 
   const layerData = JSON.parse(event.body)
 
-  const layerId = layerData.entity.id
+  const viewerLayerId = layerData.entity.id
 
   const { menus } = await datocmsRequest({
     query: viewersWithLayersQuery,
@@ -68,7 +68,7 @@ export const handler = withServerDefaults(async (event, _) => {
   const menuTree = buildMenuTree(formattedMenus)
 
   try {
-    await syncViewerLayers(menuTree, layerData.event_type, layerId)
+    await syncViewerLayers(menuTree, layerData.event_type, viewerLayerId)
   }
   catch (e) {
     console.log('The following error occured', e.message)
@@ -102,7 +102,7 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
 
   const geonetworkInstancesArray = Array.from(geonetworkInstances)
 
-  const xml = await fetchViewerLayerXML({ id: layerId })
+  const xml = await fetchViewerLayerXML({ id: viewerLayerId })
 
   // Can occur when no update needs to be done (because there is no factsheet or inspireMetadata)
   if (xml === null) {
@@ -151,13 +151,15 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
         case 'create':
         case 'publish':
           const {
-            layer: { thumbnails },
+            viewerLayer: {
+              layer: { thumbnails },
+            }
           } = await datocmsRequest({
             query: viewerLayerByIdQuery,
-            variables: { id: layerId },
+            variables: { id: viewerLayerId },
           })
 
-          await addThumbnailsToRecord(thumbnails, layerId, geonetwork)
+          await addThumbnailsToRecord(thumbnails, viewerLayerId, geonetwork)
       }
     }
   )

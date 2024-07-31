@@ -63,6 +63,8 @@ export const handler = withServerDefaults(async (event, _) => {
 
   const viewerLayerId = layerData.entity.id
 
+  console.log('viewerLayerId: ', viewerLayerId)
+
   const { menus } = await datocmsRequest({
     query: viewersWithLayersQuery,
   })

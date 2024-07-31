@@ -10,7 +10,10 @@ export function findGeonetworkInstances(menuTree, layerId) {
       if (children) {
         children.forEach((child) => {
           if (child.id === layerId) {
+
             const { geonetwork } = viewer
+
+            console.log('geonetwork found!!', geonetwork)
 
             if (geonetwork) {
               let baseUrl = new URL(geonetwork.baseUrl)

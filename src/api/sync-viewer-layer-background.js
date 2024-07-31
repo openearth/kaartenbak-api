@@ -119,6 +119,9 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
         password
       )
 
+      console.log('geonetwork: ', geonetwork)
+      console.log('now doing sync with type: ', eventType)
+
       switch (eventType) {
         case 'create': {
           await geonetwork.recordsRequest({
@@ -154,8 +157,6 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
             query: viewerLayerByIdQuery,
             variables: { id: viewerLayerId },
           })
-
-          console.log('viewerLayer', viewerLayer)
 
           await addThumbnailsToRecord(viewerLayer?.layer?.thumbnails, viewerLayerId, geonetwork)
       }

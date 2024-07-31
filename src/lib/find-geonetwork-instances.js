@@ -1,6 +1,8 @@
 export function findGeonetworkInstances(menuTree, layerId) {
   const geonetworkInstances = new Map()
 
+  console.log('menuTree: ', menuTree)
+
   menuTree.forEach((viewer) => {
     const findInMenu = (menu) => {
       const { children } = menu

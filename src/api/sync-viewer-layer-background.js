@@ -150,16 +150,14 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
       switch (eventType) {
         case 'create':
         case 'publish':
-          const {
-            viewerLayer: {
-              layer: { thumbnails },
-            }
-          } = await datocmsRequest({
+          const { viewerLayer } = await datocmsRequest({
             query: viewerLayerByIdQuery,
             variables: { id: viewerLayerId },
           })
 
-          await addThumbnailsToRecord(thumbnails, viewerLayerId, geonetwork)
+          console.log('viewerLayer', viewerLayer)
+
+          await addThumbnailsToRecord(viewerLayer?.layer?.thumbnails, viewerLayerId, geonetwork)
       }
     }
   )

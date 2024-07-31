@@ -72,6 +72,7 @@ export const handler = withServerDefaults(async (event, _) => {
   const menuTree = buildMenuTree(formattedMenus)
 
   try {
+    console.log('syncing viewer layers')
     await syncViewerLayers(menuTree, layerData.event_type, viewerLayerId)
   }
   catch (e) {
@@ -105,6 +106,8 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
   const geonetworkInstances = findGeonetworkInstances(menuTree, viewerLayerId)
 
   const geonetworkInstancesArray = Array.from(geonetworkInstances)
+
+  console.log('geonetworkInstancesArray: ', geonetworkInstancesArray)
 
   const xml = await fetchViewerLayerXML({ id: viewerLayerId })
 

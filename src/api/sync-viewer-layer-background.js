@@ -59,6 +59,8 @@ export const handler = withServerDefaults(async (event, _) => {
 
   const layerData = JSON.parse(event.body)
 
+  console.log('received webhook call with data: ', layerData)
+
   const viewerLayerId = layerData.entity.id
 
   const { menus } = await datocmsRequest({

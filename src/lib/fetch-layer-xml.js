@@ -130,8 +130,6 @@ export async function fetchLayerXML({ id }) {
     ...viewerLayer
   } } = await datocmsRequest({ query, variables: { id } })
 
-  console.log(layer)
-
   const data = {
     layer: {
       ...layer,

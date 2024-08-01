@@ -7,14 +7,15 @@ import { findGeonetworkInstances } from '../lib/find-geonetwork-instances'
 import { fetchViewerLayerXML } from '../lib/fetch-viewer-layer-xml'
 import { formatMenusRecursive } from '../lib/format-menu'
 import Mailjet from 'node-mailjet'
+import fs from 'fs';
 
 const mailjet = new Mailjet({
   apiKey: process.env.MAILJET_API_TOKEN,
   apiSecret: process.env.MAILJET_API_SECRET,
 })
 
-const viewersWithLayersQuery = /* graphql */ `
-query viewersWithLayers ($first: IntType, $skip: IntType = 0, $locale: SiteLocale = nl) {
+const viewersWithViewerLayersQuery = /* graphql */ `
+query viewersWithViewerLayersQuery ($first: IntType, $skip: IntType = 0, $locale: SiteLocale = nl) {
   menus: allMenus(first: $first, skip: $skip, locale: $locale) {
     id
     geonetwork {
@@ -57,45 +58,86 @@ export const handler = withServerDefaults(async (event, _) => {
     }
   }
 
-  const layerData = JSON.parse(event.body)
+  const data = JSON.parse(event.body)
 
-  const viewerLayerId = layerData.entity.id
+  const id = data.entity.id
 
   const { menus } = await datocmsRequest({
-    query: viewersWithLayersQuery,
+    query: viewersWithViewerLayersQuery,
+    preview: true
   })
   const formattedMenus = formatMenusRecursive(menus)
   const menuTree = buildMenuTree(formattedMenus)
 
   try {
-    await syncViewerLayers(menuTree, layerData.event_type, viewerLayerId)
+    const type = data.related_entities.find(entity => entity.type === 'item_type').attributes.api_key
+
+    if (type === 'viewer_layer') {
+      await syncViewerLayers(menuTree, data.event_type, id)
+    } else if (type === 'menu') {
+      await syncViewer(menuTree, data.event_type, id)
+    }
   }
   catch (e) {
     console.log('The following error occured', e.message)
 
-    // for (let email of findEmailContactsForLayerId(menuTree, layerId)) {
-    //   console.log('Sending email to', email)
+    for (let email of findEmailContactsForLayerId(menuTree, layerId)) {
+      console.log('Sending email to', email)
 
-    //   await mailjet.post('send', { version: 'v3.1' }).request({
-    //     Messages: [
-    //       {
-    //         From: {
-    //           Email: process.env.MAILJET_FROM_EMAIL,
-    //         },
-    //         To: [
-    //           {
-    //             Email: email,
-    //           },
-    //         ],
-    //         Subject: `Fout bij opslaan metadata voor laag ${layerId}`,
-    //         HTMLPart: e.message,
-    //       },
-    //     ],
-    //   })
-    // }
+      await mailjet.post('send', { version: 'v3.1' }).request({
+        Messages: [
+          {
+            From: {
+              Email: process.env.MAILJET_FROM_EMAIL,
+            },
+            To: [
+              {
+                Email: email,
+              },
+            ],
+            Subject: `Fout bij opslaan metadata voor laag ${layerId}`,
+            HTMLPart: e.message,
+          },
+        ],
+      })
+    }
+  }
+})
+
+async function syncViewer(menuTree, eventType, viewerId) {
+  const viewerLayers = new Set()
+
+  const findChilrenInMenu = (menu, viewerId) => {
+    const { children } = menu
+
+    if (children) {
+      children.forEach((child) => {
+        if (child.id === viewerId && child.children) {
+          child.children.forEach((viewerLayer) => {
+            viewerLayers.add(viewerLayer.id)
+          })
+        }
+
+        findChilrenInMenu(child, viewerId)
+      })
+    }
   }
 
-})
+  menuTree.forEach((viewer) => {
+    findChilrenInMenu(viewer, viewerId)
+  })
+
+  const viewerLayersArray = Array.from(viewerLayers)
+
+
+  const requestsPromises = viewerLayersArray.map(
+    async (viewerLayerId) => {
+      await syncViewerLayers(menuTree, eventType, viewerLayerId)
+    }
+  )
+
+  const results = await Promise.allSettled(requestsPromises)
+}
 
 async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
   const geonetworkInstances = findGeonetworkInstances(menuTree, viewerLayerId)
@@ -154,8 +196,6 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
             query: viewerLayerByIdQuery,
             variables: { id: viewerLayerId },
           })
-
-          console.log('viewerLayer', viewerLayer)
 
           await addThumbnailsToRecord(viewerLayer?.layer?.thumbnails, viewerLayerId, geonetwork)
       }

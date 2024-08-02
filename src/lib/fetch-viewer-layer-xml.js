@@ -7,7 +7,8 @@ import convert from 'xml-js'
 
 const query = /* graphql */ `
 query LayerById($id: ItemId) {
-  viewerLayer(filter: {layer: {eq: $id}}) {
+  viewerLayer(filter: {id: {eq: $id}}) {
+    id
     useFactsheetAsMetadata
     inspireMetadata {
       _updatedAt
@@ -108,14 +109,14 @@ function recursivelyFindLayer(layers, name) {
     ? layers
     : [layers]
 
-  for(let layer of layerList) {
-    if(layer.Name && layer.Name._text === name) {
+  for (let layer of layerList) {
+    if (layer.Name && layer.Name._text === name) {
       return layer
     }
-    
-    if(layer.Layer) {
+
+    if (layer.Layer) {
       const foundLayer = recursivelyFindLayer(layer.Layer, name)
-      if(foundLayer) { 
+      if (foundLayer) {
         return foundLayer
       }
     }
@@ -124,7 +125,7 @@ function recursivelyFindLayer(layers, name) {
   return null
 }
 
-export async function fetchLayerXML({ id }) {
+export async function fetchViewerLayerXML({ id }) {
   const { viewerLayer: {
     layer,
     ...viewerLayer
@@ -160,7 +161,7 @@ export async function fetchLayerXML({ id }) {
   if (data.layer.useFactsheetAsMetadata) {
     const factsheet = data.layer.factsheets[0]
 
-    if(factsheet) {
+    if (factsheet) {
       formatted = formatFactsheetXml({
         id,
         layerInfo,
@@ -169,7 +170,7 @@ export async function fetchLayerXML({ id }) {
       })
     }
 
-  } else if(data.layer.inspireMetadata) {
+  } else if (data.layer.inspireMetadata) {
     formatted = formatInspireMetadataXml({
       id,
       layerInfo,

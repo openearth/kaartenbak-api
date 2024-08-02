@@ -1,8 +1,6 @@
 export function findGeonetworkInstances(menuTree, id) {
   const geonetworkInstances = new Map()
 
-  console.log('searching for geonetwork instances with id', id)
-
   menuTree.forEach((viewer) => {
     const findInMenu = (menu) => {
       const { children } = menu

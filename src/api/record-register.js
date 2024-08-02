@@ -19,9 +19,7 @@ query viewersWithLayers ($first: IntType, $skip: IntType = 0, $locale: SiteLocal
       password
     }
     children: viewerLayers {
-      layer {
-        id
-      }
+      id
     }
     parent {
       id

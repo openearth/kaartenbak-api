@@ -20,6 +20,9 @@ query viewersWithLayers ($first: IntType, $skip: IntType = 0, $locale: SiteLocal
     }
     children: viewerLayers {
       id
+      child: layer {
+        id
+      }
     }
     parent {
       id

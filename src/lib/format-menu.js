@@ -1,8 +1,9 @@
 export function formatMenu(menu) {
-  const formattedLayers = menu.children?.map(({ layer, ...metadataFields }) => {
+  const formattedLayers = menu.children?.map(({ layer, child, ...metadataFields }) => {
     return {
       ...layer,
-      ...metadataFields
+      ...metadataFields,
+      ...(child && { children: [child] })
     }
   }) || [];
 

@@ -81,7 +81,7 @@ export const handler = withServerDefaults(async (event, _) => {
   catch (e) {
     console.log('The following error occured', e.message)
 
-    for (let email of findEmailContactsForLayerId(menuTree, layerId)) {
+    for (let email of findEmailContactsForId(menuTree, id)) {
       console.log('Sending email to', email)
 
       await mailjet.post('send', { version: 'v3.1' }).request({
@@ -213,7 +213,7 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
 
 }
 
-function findEmailContactsForLayerId(menuTree, layerId) {
+function findEmailContactsForId(menuTree, id) {
   const contacts = new Set()
 
   menuTree.forEach((viewer) => {
@@ -224,7 +224,7 @@ function findEmailContactsForLayerId(menuTree, layerId) {
       if (children) {
         children.forEach((child) => {
 
-          if (child.layer.id === layerId) {
+          if (child.id === id) {
             const { errorNotificationContacts } = viewer
 
             if (errorNotificationContacts.length) {

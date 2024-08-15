@@ -1,5 +1,5 @@
 export function formatSpatialRepresentationType(layerInfo) {
-  const keyword = layerInfo?.KeywordList?.Keyword[0]?._text?.toLowerCase()
+  const keyword = layerInfo?.KeywordList?.Keyword?.[0]?._text?.toLowerCase()
 
   let representationType
 

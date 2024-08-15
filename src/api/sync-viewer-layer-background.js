@@ -175,6 +175,7 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
           break
         }
 
+        case 'update':
         case 'publish': {
           await geonetwork.recordsRequest({
             url: '?uuidProcessing=OVERWRITE&publishToAll=true',
@@ -191,6 +192,7 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
 
       switch (eventType) {
         case 'create':
+        case 'update':
         case 'publish':
           const { viewerLayer } = await datocmsRequest({
             query: viewerLayerByIdQuery,

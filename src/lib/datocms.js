@@ -26,7 +26,7 @@ function executeFetch(query, variables = {}, preview = false) {
     headers: {
       'Content-Type': 'application/json',
       Authorization: process.env.DATO_API_TOKEN,
-      'X-Environment': 'production',
+      'X-Environment': 'main',
     },
     body: JSON.stringify({ query, variables }),
   })

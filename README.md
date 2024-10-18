@@ -20,6 +20,8 @@ API Layer on top of [Kaartenbak CMS](https://ihm-kaarten-bak.admin.datocms.com/)
   * Where `query` is the search query
 * `/api/sync-layer`
   * Meant for the webhook of DatoCMS Kaartenbak. See below for the details.
+* `/api/sync-viewer-layer`
+  * Meant for the webhook of DatoCMS Kaartenbak. See below for the details.
 
 ## How synchronising DatoCMS Kaartenbak Layer to Geonetwork works
 

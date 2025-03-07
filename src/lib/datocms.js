@@ -16,7 +16,7 @@ const camelCase = pipe(
 
 const defaultFirst = 100
 
-function executeFetch(query, variables = {}, preview = false) {
+function executeFetch(query, variables = {}, preview = false, token = process.env.DATO_API_TOKEN) {
   const endpoint = preview
     ? 'https://graphql.datocms.com/preview'
     : 'https://graphql.datocms.com/'
@@ -25,7 +25,7 @@ function executeFetch(query, variables = {}, preview = false) {
     method: 'post',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: process.env.DATO_API_TOKEN,
+      Authorization: `Bearer ${token}`,
       'X-Environment': 'main',
     },
     body: JSON.stringify({ query, variables }),
@@ -85,8 +85,8 @@ function returnData(response) {
   return response.data
 }
 
-export const datocmsRequest = curry(({ query, variables, preview }) => {
-  const args = [query, { first: defaultFirst, ...variables }, preview]
+export const datocmsRequest = curry(({ query, variables, preview, token: tokenOverride }) => {
+  const args = [query, { first: defaultFirst, ...variables }, preview, tokenOverride]
 
   return executeFetch(...args)
     .then(getPaginatedData(...args))

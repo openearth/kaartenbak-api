@@ -16,6 +16,18 @@ dotenv.config({
     path: envPath,
 })
 
+export const instances = [
+    {
+        name: "nl2120",
+        datoApiKey: process.env.DATO_API_KEY_NL2120,
+    },
+    {
+        name: "openearth-rws-viewer",
+        datoApiKey: process.env.DATO_API_KEY_OPENEARTH_RWS_VIEWER,
+    },
+];
+
+
 const viewersWithLayersQuery = /* graphql */ `
 query viewersWithLayers ($first: IntType, $skip: IntType = 0, $locale: SiteLocale = nl) {
   menus: allMenus(first: $first, skip: $skip, locale: $locale) {
@@ -77,17 +89,20 @@ const findExternalMetadata = (menuTree) => {
 
 async function sync() {
     try {
-        const { menus } = await datocmsRequest({
-            query: viewersWithLayersQuery,
-        })
+        for (const instance of instances) {
+            const { menus } = await datocmsRequest({
+                query: viewersWithLayersQuery,
+                token: instance.datoApiKey
+            })
 
-        const formattedMenus = formatMenusRecursive(menus)
-        const menuTree = buildMenuTree(formattedMenus)
-        const externalMetadatas = findExternalMetadata(menuTree)
+            const formattedMenus = formatMenusRecursive(menus)
+            const menuTree = buildMenuTree(formattedMenus)
+            const externalMetadatas = findExternalMetadata(menuTree)
 
-        await syncExternalMetadata(externalMetadatas)
+            await syncExternalMetadata(externalMetadatas)
 
-        console.log('Synced all external metadata')
+            console.log('Synced all external metadata')
+        }
     } catch (err) {
         console.error(err)
     }
@@ -100,13 +115,10 @@ const syncExternalMetadata = async (externalMetadatas) => {
 
         const transformedSource = transformSourceUrl(sourceUrl)
 
-        console.log(transformedSource)
-
         const geonetwork = new Geonetwork(geoNetworkUrl, destination.geonetwork.username, destination.geonetwork.password)
 
+        // TODO implement transformWith
         const transformWith = await detectTransform(transformedSource)
-
-        console.log(transformWith)
 
         const response = await geonetwork.putRecord({
             params: {

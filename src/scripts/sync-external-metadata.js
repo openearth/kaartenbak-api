@@ -5,6 +5,7 @@ import { formatMenusRecursive } from '../lib/format-menu.js'
 import { datocmsRequest } from '../lib/datocms.js'
 import { buildMenuTree } from '../lib/build-menu-tree.js'
 import { Geonetwork } from '../lib/geonetwork.js'
+import { detectFormatWith } from '../lib/metadata-formats.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -74,7 +75,6 @@ const findExternalMetadata = (menuTree) => {
     return externalMetadatas
 }
 
-
 async function sync() {
     try {
         const { menus } = await datocmsRequest({
@@ -100,13 +100,20 @@ const syncExternalMetadata = async (externalMetadatas) => {
 
         const transformedSource = transformSourceUrl(sourceUrl)
 
+        console.log(transformedSource)
+
         const geonetwork = new Geonetwork(geoNetworkUrl, destination.geonetwork.username, destination.geonetwork.password)
+
+        const transformWith = await detectTransform(transformedSource)
+
+        console.log(transformWith)
 
         const response = await geonetwork.putRecord({
             params: {
                 metadataType: "METADATA",
                 uuidProcessing: "OVERWRITE",
                 url: transformedSource,
+                // ...(transformWith ? { transformWith } : {})
             },
             headers: {
                 'Accept': 'application/json, text/plain, */*',
@@ -116,6 +123,13 @@ const syncExternalMetadata = async (externalMetadatas) => {
 
         console.log(`Synced ${sourceUrl} to ${transformedSource}`)
     }
+}
+
+const detectTransform = async (transformedSource) => {
+    const source = await fetch(`${transformedSource}/formatters/xml`)
+    const sourceContent = await source.text()
+
+    return detectFormatWith(sourceContent)
 }
 
 const transformSourceUrl = (sourceUrl) => {

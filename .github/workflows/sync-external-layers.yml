@@ -1,7 +1,7 @@
 name: Sync external layers
 on: 
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '*/30 * * * *'
 jobs:
   report:
     runs-on: ubuntu-latest

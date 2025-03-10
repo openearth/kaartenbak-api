@@ -101,7 +101,7 @@ async function sync() {
 
             await syncExternalMetadata(externalMetadatas)
 
-            console.log('Synced all external metadata')
+            console.log(`Synced ${externalMetadatas.length} external metadata instances for ${instance.name}`)
         }
     } catch (err) {
         console.error(err)

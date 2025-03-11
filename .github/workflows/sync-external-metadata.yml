@@ -2,7 +2,7 @@ name: Sync external metadata
 on: 
   workflow_dispatch:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '0 0 * * *'
 jobs:
   report:
     runs-on: ubuntu-latest

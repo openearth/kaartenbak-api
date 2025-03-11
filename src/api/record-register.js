@@ -99,6 +99,9 @@ export const handler = withServerDefaults(async (event, _) => {
   }
 
   return {
-    body: baseUrl + geonetworkUrl + '/dut/catalog.search#/metadata/' + recordId,
+    body: JSON.stringify({ url: baseUrl + geonetworkUrl + '/dut/catalog.search#/metadata/' + recordId }),
+    headers: {
+      'Content-Type': 'application/json',
+    },
   }
 })

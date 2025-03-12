@@ -2,7 +2,10 @@ name: Sync external metadata
 on: 
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *'
+    # This cron expression means: Run at 12:00 PM (noon) UTC every day
+    # The format is: minute hour day-of-month month day-of-week
+    # '0 12 * * *' = At minute 0 of hour 12 (noon) on any day of month, any month, any day of week
+    - cron: '0 8,20 * * *'
 jobs:
   report:
     runs-on: ubuntu-latest

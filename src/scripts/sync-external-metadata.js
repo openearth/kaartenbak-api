@@ -6,6 +6,7 @@ import { datocmsRequest } from '../lib/datocms.js'
 import { buildMenuTree } from '../lib/build-menu-tree.js'
 import { Geonetwork } from '../lib/geonetwork.js'
 import { transform } from '../lib/xml-transformer.js'
+import { initializeMailjet, sendErrorEmails } from '../lib/email-notifications.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -16,15 +17,17 @@ dotenv.config({
     path: envPath,
 })
 
+const mailjet = initializeMailjet()
+
 export const instances = [
     {
         name: "nl2120",
         datoApiKey: process.env.DATO_API_KEY_NL2120,
     },
-    {
-        name: "openearth-rws-viewer",
-        datoApiKey: process.env.DATO_API_KEY_OPENEARTH_RWS_VIEWER,
-    },
+    // {
+    //     name: "openearth-rws-viewer",
+    //     datoApiKey: process.env.DATO_API_KEY_OPENEARTH_RWS_VIEWER,
+    // },
 ];
 
 
@@ -37,6 +40,9 @@ query viewersWithLayers($first: IntType, $skip: IntType = 0, $locale: SiteLocale
       baseUrl
       username
       password
+    }
+    errorNotificationContacts {
+      email
     }
     children: viewerLayers {
       id
@@ -118,30 +124,34 @@ const syncExternalMetadata = async (externalMetadatas) => {
 
         const transformedSource = transformSourceUrl(sourceUrl)
 
-        const geonetwork = new Geonetwork(geoNetworkUrl, destination.geonetwork.username, destination.geonetwork.password)
+        try {
+            const geonetwork = new Geonetwork(geoNetworkUrl, destination.geonetwork.username, destination.geonetwork.password)
 
-        const xml = await fetch(`${transformedSource}/formatters/xml`).then(res => res.text())
+            const xml = await fetch(`${transformedSource}/formatters/xml`).then(res => res.text())
 
-        // Use the chainable transformer
-        const transformedXml = transform(xml)
-            .addThumbnails(externalMetadata.metadata.thumbnails)
-            .addLinks(externalMetadata.metadata.links)
-            .replaceId(externalMetadata.metadata.id)
-            .getXml();
+            // Use the chainable transformer
+            const transformedXml = transform(xml)
+                .addThumbnails(externalMetadata.metadata.thumbnails)
+                .addLinks(externalMetadata.metadata.links)
+                .replaceId(externalMetadata.metadata.id)
+                .getXml();
 
-        const response = await geonetwork.recordsRequest({
-            method: 'PUT',
-            params: {
-                metadataType: "METADATA",
-                uuidProcessing: "OVERWRITE",
-                publishToAll: "true"
-            },
-            headers: {
-                'Accept': 'application/json, text/plain, */*',
-                'Content-Type': 'application/xml'
-            },
-            body: transformedXml
-        })
+            await geonetwork.recordsRequest({
+                method: 'PUT',
+                params: {
+                    metadataType: "METADATA",
+                    uuidProcessing: "OVERWRITE",
+                    publishToAll: "true"
+                },
+                headers: {
+                    'Accept': 'application/json, text/plain, */*',
+                    'Content-Type': 'application/xml'
+                },
+                body: transformedXml
+            })
+        } catch (error) {
+            throw new Error(`Error syncing external metadata for ${transformedSource} to ${destination.geonetwork.baseUrl}:`, error)
+        }
 
         console.log('Sync completed:');
         console.log(`  Source: ${transformedSource}`);
@@ -159,8 +169,10 @@ const transformSourceUrl = (sourceUrl) => {
 }
 
 async function sync() {
-    try {
-        for (const instance of instances) {
+    for (const instance of instances) {
+        try {
+            console.log(`Starting sync for ${instance.name}...`)
+
             const { menus } = await datocmsRequest({
                 query: viewersWithLayersQuery,
                 token: instance.datoApiKey
@@ -173,9 +185,24 @@ async function sync() {
             await syncExternalMetadata(externalMetadatas)
 
             console.log(`Synced ${externalMetadatas.length} external metadata instances for ${instance.name}`)
+        } catch (error) {
+            console.error(`Error during sync for ${instance.name}:`, error)
+
+            try {
+                // Get menus again to find error notification contacts
+                const { menus } = await datocmsRequest({
+                    query: viewersWithLayersQuery,
+                    token: instance.datoApiKey
+                })
+
+                const formattedMenus = formatMenusRecursive(menus)
+                const menuTree = buildMenuTree(formattedMenus)
+
+                await sendErrorEmails(menuTree, instance.name, error, mailjet)
+            } catch (emailError) {
+                console.error('Error sending notification emails:', emailError)
+            }
         }
-    } catch (err) {
-        console.error(err)
     }
 }
 

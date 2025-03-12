@@ -9,10 +9,25 @@ export function addThumbnailsToXml(xmlString, thumbnails) {
     return xmlString;
   }
 
-  // Always add thumbnails regardless of whether they already exist
-  // Find a suitable insertion point - after descriptiveKeywords section
-  const insertPoint = xmlString.lastIndexOf('</gmd:descriptiveKeywords>');
-  if (insertPoint === -1) {
+  // Find the first graphicOverview tag to insert before existing thumbnails
+  const firstGraphicOverviewIndex = xmlString.indexOf('<gmd:graphicOverview>');
+
+  // If no existing thumbnails, find a suitable insertion point after descriptiveKeywords
+  const insertAfterDescriptiveKeywords = xmlString.lastIndexOf('</gmd:descriptiveKeywords>');
+
+  // Determine where to insert the new thumbnails
+  let insertPoint;
+  if (firstGraphicOverviewIndex !== -1) {
+    // Insert before existing thumbnails
+    insertPoint = firstGraphicOverviewIndex;
+    // We'll insert directly at this position, without any trailing text
+    var trailingText = '';
+  } else if (insertAfterDescriptiveKeywords !== -1) {
+    // No existing thumbnails, insert after descriptiveKeywords
+    insertPoint = insertAfterDescriptiveKeywords + '</gmd:descriptiveKeywords>'.length;
+    // We'll insert at this position, without any leading text
+    var trailingText = '';
+  } else {
     console.error('Could not find a suitable place to insert thumbnails');
     return xmlString;
   }
@@ -32,7 +47,7 @@ export function addThumbnailsToXml(xmlString, thumbnails) {
 </gmd:graphicOverview>`;
   });
 
-  return xmlString.slice(0, insertPoint + '</gmd:descriptiveKeywords>'.length) +
+  return xmlString.slice(0, insertPoint) +
     thumbnailsXml +
-    xmlString.slice(insertPoint + '</gmd:descriptiveKeywords>'.length);
+    xmlString.slice(insertPoint);
 } 

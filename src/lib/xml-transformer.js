@@ -63,6 +63,22 @@ export class XmlTransformer {
     getXml() {
         return this.xml;
     }
+
+    /**
+     * Replace the file identifier in the XML
+     * @param {string} id - The new identifier to use
+     * @returns {XmlTransformer} - The transformer instance for chaining
+     */
+    replaceId(id) {
+        // Find the fileIdentifier element and replace it with the new ID
+        // The pattern matches the entire fileIdentifier element including the CharacterString inside
+        this.xml = this.xml.replace(
+            /<gmd:fileIdentifier>[\s\S]*?<gco:CharacterString>.*?<\/gco:CharacterString>[\s\S]*?<\/gmd:fileIdentifier>/,
+            `<gmd:fileIdentifier>\n    <gco:CharacterString>${id}</gco:CharacterString>\n  </gmd:fileIdentifier>`
+        );
+
+        return this;
+    }
 }
 
 /**

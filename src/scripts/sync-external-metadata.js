@@ -5,7 +5,6 @@ import { formatMenusRecursive } from '../lib/format-menu.js'
 import { datocmsRequest } from '../lib/datocms.js'
 import { buildMenuTree } from '../lib/build-menu-tree.js'
 import { Geonetwork } from '../lib/geonetwork.js'
-import { detectFormatWith } from '../lib/metadata-formats.js'
 import { transform } from '../lib/xml-transformer.js'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -84,16 +83,16 @@ const findExternalMetadata = (menuTree) => {
 
             if (externalMetadata) {
                 externalMetadatas.push({
-                    id,
                     sourceUrl: externalMetadata,
                     destination: {
                         geonetwork: currentGeonetwork
                     },
                     metadata: {
+                        id,
                         thumbnails: thumbnails?.map(thumbnail => {
                             return {
                                 url: thumbnail.url,
-                                filename: name
+                                filename: `Kaarttitel: ${name}`
                             }
                         }) || [],
                         links: links || []
@@ -110,6 +109,53 @@ const findExternalMetadata = (menuTree) => {
     findInMenu(menuTree)
 
     return externalMetadatas
+}
+
+const syncExternalMetadata = async (externalMetadatas) => {
+    for (const externalMetadata of externalMetadatas) {
+        const { sourceUrl, destination } = externalMetadata
+        const geoNetworkUrl = destination.geonetwork.baseUrl + '/geonetwork/srv/api'
+
+        const transformedSource = transformSourceUrl(sourceUrl)
+
+        const geonetwork = new Geonetwork(geoNetworkUrl, destination.geonetwork.username, destination.geonetwork.password)
+
+        const xml = await fetch(`${transformedSource}/formatters/xml`).then(res => res.text())
+
+        // Use the chainable transformer
+        const transformedXml = transform(xml)
+            .addThumbnails(externalMetadata.metadata.thumbnails)
+            .addLinks(externalMetadata.metadata.links)
+            .replaceId(externalMetadata.metadata.id)
+            .getXml();
+
+        const response = await geonetwork.recordsRequest({
+            method: 'PUT',
+            params: {
+                metadataType: "METADATA",
+                uuidProcessing: "OVERWRITE",
+                publishToAll: "true"
+            },
+            headers: {
+                'Accept': 'application/json, text/plain, */*',
+                'Content-Type': 'application/xml'
+            },
+            body: transformedXml
+        })
+
+        console.log('Sync completed:');
+        console.log(`  Source: ${transformedSource}`);
+        console.log(`  Destination: ${destination.geonetwork.baseUrl}`);
+        console.log(`  Record ID: ${externalMetadata.metadata.id}`);
+    }
+}
+
+const transformSourceUrl = (sourceUrl) => {
+    const url = new URL(sourceUrl)
+    const baseUrl = url.origin
+    const uuid = sourceUrl.split('/').pop()
+
+    return `${baseUrl}/geonetwork/srv/api/records/${uuid}`
 }
 
 async function sync() {
@@ -131,59 +177,6 @@ async function sync() {
     } catch (err) {
         console.error(err)
     }
-}
-
-const syncExternalMetadata = async (externalMetadatas) => {
-    for (const externalMetadata of externalMetadatas) {
-        const { sourceUrl, destination } = externalMetadata
-        const geoNetworkUrl = destination.geonetwork.baseUrl + '/geonetwork/srv/api'
-
-        const transformedSource = transformSourceUrl(sourceUrl)
-
-        const geonetwork = new Geonetwork(geoNetworkUrl, destination.geonetwork.username, destination.geonetwork.password)
-
-        const xml = await fetch(`${transformedSource}/formatters/xml`).then(res => res.text())
-
-        // Use the chainable transformer
-        const transformedXml = transform(xml)
-            .addThumbnails(externalMetadata.metadata.thumbnails)
-            .addLinks(externalMetadata.metadata.links)
-            .getXml()
-
-        // TODO implement transformWith
-        const transformWith = await detectTransform(transformedSource)
-
-        const response = await geonetwork.recordsRequest({
-            method: 'PUT',
-            params: {
-                metadataType: "METADATA",
-                uuidProcessing: "OVERWRITE",
-                // ...(transformWith ? { transformWith } : {})
-            },
-            headers: {
-                'Accept': 'application/json, text/plain, */*',
-                'Content-Type': 'application/xml'
-            },
-            body: transformedXml
-        })
-
-        console.log(`Synced ${transformedSource} to ${destination.geonetwork.baseUrl}`)
-    }
-}
-
-const detectTransform = async (transformedSource) => {
-    const source = await fetch(`${transformedSource}/formatters/xml`)
-    const sourceContent = await source.text()
-
-    return detectFormatWith(sourceContent)
-}
-
-const transformSourceUrl = (sourceUrl) => {
-    const url = new URL(sourceUrl)
-    const baseUrl = url.origin
-    const uuid = sourceUrl.split('/').pop()
-
-    return `${baseUrl}/geonetwork/srv/api/records/${uuid}`
 }
 
 sync()

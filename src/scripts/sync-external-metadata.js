@@ -6,6 +6,7 @@ import { datocmsRequest } from '../lib/datocms.js'
 import { buildMenuTree } from '../lib/build-menu-tree.js'
 import { Geonetwork } from '../lib/geonetwork.js'
 import { detectFormatWith } from '../lib/metadata-formats.js'
+import { transform } from '../lib/xml-transformer.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -29,7 +30,7 @@ export const instances = [
 
 
 const viewersWithLayersQuery = /* graphql */ `
-query viewersWithLayers ($first: IntType, $skip: IntType = 0, $locale: SiteLocale = nl) {
+query viewersWithLayers($first: IntType, $skip: IntType = 0, $locale: SiteLocale = en) {
   menus: allMenus(first: $first, skip: $skip, locale: $locale) {
     id
     name
@@ -39,13 +40,26 @@ query viewersWithLayers ($first: IntType, $skip: IntType = 0, $locale: SiteLocal
       password
     }
     children: viewerLayers {
-      externalMetadata
+      id
       layer {
+        thumbnails {
+          url
+        }
         id
         name
         url
-        }
-        }
+      }
+      links {
+        ... on MetadataLinkRecord {
+            id
+            url
+            protocol
+            name
+            description
+        }   
+      }
+      externalMetadata
+    }
     parent {
       id
     }
@@ -53,7 +67,8 @@ query viewersWithLayers ($first: IntType, $skip: IntType = 0, $locale: SiteLocal
   _allMenusMeta {
     count
   }
-}`
+}
+`
 
 const findExternalMetadata = (menuTree) => {
     const externalMetadatas = []
@@ -61,7 +76,7 @@ const findExternalMetadata = (menuTree) => {
 
     function findInMenu(children) {
         for (const child of children) {
-            const { geonetwork, externalMetadata, children } = child
+            const { geonetwork, externalMetadata, children, thumbnails, name, links, id } = child
 
             if (geonetwork) {
                 currentGeonetwork = geonetwork
@@ -69,9 +84,19 @@ const findExternalMetadata = (menuTree) => {
 
             if (externalMetadata) {
                 externalMetadatas.push({
+                    id,
                     sourceUrl: externalMetadata,
                     destination: {
                         geonetwork: currentGeonetwork
+                    },
+                    metadata: {
+                        thumbnails: thumbnails?.map(thumbnail => {
+                            return {
+                                url: thumbnail.url,
+                                filename: name
+                            }
+                        }) || [],
+                        links: links || []
                     }
                 })
             }
@@ -117,23 +142,32 @@ const syncExternalMetadata = async (externalMetadatas) => {
 
         const geonetwork = new Geonetwork(geoNetworkUrl, destination.geonetwork.username, destination.geonetwork.password)
 
+        const xml = await fetch(`${transformedSource}/formatters/xml`).then(res => res.text())
+
+        // Use the chainable transformer
+        const transformedXml = transform(xml)
+            .addThumbnails(externalMetadata.metadata.thumbnails)
+            .addLinks(externalMetadata.metadata.links)
+            .getXml()
+
         // TODO implement transformWith
         const transformWith = await detectTransform(transformedSource)
 
-        const response = await geonetwork.putRecord({
+        const response = await geonetwork.recordsRequest({
+            method: 'PUT',
             params: {
                 metadataType: "METADATA",
                 uuidProcessing: "OVERWRITE",
-                url: transformedSource,
                 // ...(transformWith ? { transformWith } : {})
             },
             headers: {
                 'Accept': 'application/json, text/plain, */*',
                 'Content-Type': 'application/xml'
-            }
+            },
+            body: transformedXml
         })
 
-        console.log(`Synced ${sourceUrl} to ${transformedSource}`)
+        console.log(`Synced ${transformedSource} to ${destination.geonetwork.baseUrl}`)
     }
 }
 

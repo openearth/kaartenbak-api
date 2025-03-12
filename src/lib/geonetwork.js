@@ -83,27 +83,18 @@ export class Geonetwork {
       url += arg.url
     }
 
-    return this.#request({
-      ...arg,
-      url,
-    })
-  }
-
-  putRecord(arg) {
-    let url = '/records'
-
-    if (arg.url) {
-      url += arg.url
+    if (arg.params) {
+      const params = new URLSearchParams(arg.params);
+      if (url.includes('?')) {
+        url += '&' + params.toString();
+      } else {
+        url += '?' + params.toString();
+      }
     }
 
     return this.#request({
       ...arg,
       url,
-      method: 'PUT',
-      body: null,
-      params: {
-        ...arg.params,
-      },
     })
   }
 }

@@ -58,7 +58,7 @@ export class Geonetwork {
         Authorization: basicAuth,
         'X-XSRF-TOKEN': token,
         Cookie: cookie.toString(),
-        Accept: 'application/json',
+        accept: 'application/json',
         ...headers,
       },
     }).then(async (res) => {

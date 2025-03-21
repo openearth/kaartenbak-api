@@ -220,7 +220,10 @@ async function sync() {
           "../lib/email-notifications.js"
         );
 
-        const mailjet = initializeMailjet();
+        const mailjet = initializeMailjet({
+          apiKey: process.env.MAILJET_API_TOKEN,
+          apiSecret: process.env.MAILJET_API_SECRET,
+        });
 
         await sendErrorEmails(menuTree, instance.name, error, mailjet);
       } catch (emailError) {

@@ -4,10 +4,13 @@ import Mailjet from "node-mailjet";
  * Initialize the Mailjet client
  * @returns {Object} Configured Mailjet client
  */
-export function initializeMailjet() {
+export function initializeMailjet({
+  apiKey = process.env.MAILJET_API_TOKEN,
+  apiSecret = process.env.MAILJET_API_SECRET,
+}) {
   return new Mailjet({
-    apiKey: process.env.MAILJET_API_TOKEN,
-    apiSecret: process.env.MAILJET_API_SECRET,
+    apiKey,
+    apiSecret,
   });
 }
 

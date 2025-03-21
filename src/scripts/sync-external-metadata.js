@@ -6,10 +6,6 @@ import { datocmsRequest } from "../lib/datocms.js";
 import { buildMenuTree } from "../lib/build-menu-tree.js";
 import { Geonetwork } from "../lib/geonetwork.js";
 import { transform } from "../lib/xml-transformer.js";
-import {
-  initializeMailjet,
-  sendErrorEmails,
-} from "../lib/email-notifications.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -19,8 +15,6 @@ const envPath = path.join(__dirname, "../../.env");
 dotenv.config({
   path: envPath,
 });
-
-const mailjet = initializeMailjet();
 
 export const instances = [
   {
@@ -221,6 +215,12 @@ async function sync() {
 
         const formattedMenus = formatMenusRecursive(menus);
         const menuTree = buildMenuTree(formattedMenus);
+        // Dynamically import email notification functions
+        const { initializeMailjet, sendErrorEmails } = await import(
+          "../lib/email-notifications.js"
+        );
+
+        const mailjet = initializeMailjet();
 
         await sendErrorEmails(menuTree, instance.name, error, mailjet);
       } catch (emailError) {

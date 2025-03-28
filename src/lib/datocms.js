@@ -21,7 +21,7 @@ function executeFetch(
   variables = {},
   preview = false,
   token = process.env.DATO_API_TOKEN,
-  environment = "main"
+  environment = "data-harvest-test-environment"
 ) {
   const endpoint = preview
     ? "https://graphql.datocms.com/preview"

@@ -22,8 +22,8 @@ export const instances = [
     datoApiKey: process.env.DATO_API_KEY_NL2120,
   },
   // {
-  //     name: "openearth-rws-viewer",
-  //     datoApiKey: process.env.DATO_API_KEY_OPENEARTH_RWS_VIEWER,
+  //   name: "openearth-rws-viewer",
+  //   datoApiKey: process.env.DATO_API_KEY_OPENEARTH_RWS_VIEWER,
   // },
 ];
 
@@ -125,6 +125,12 @@ const findExternalMetadata = (menuTree) => {
 const syncExternalMetadata = async (externalMetadatas) => {
   for (const externalMetadata of externalMetadatas) {
     const { sourceUrl, destination } = externalMetadata;
+
+    if (!destination.geonetwork) {
+      console.log("Skipped ", externalMetadata, ", no geonetwork destination");
+      continue;
+    }
+
     const geoNetworkUrl =
       destination.geonetwork.baseUrl + "/geonetwork/srv/api";
 
@@ -179,8 +185,9 @@ const transformSourceUrl = (sourceUrl) => {
   const url = new URL(sourceUrl);
   const baseUrl = url.origin;
   const uuid = sourceUrl.split("/").pop();
+  const geonetworkPath = url.pathname.split("/").slice(0, 2).join("/");
 
-  return `${baseUrl}/geonetwork/srv/api/records/${uuid}`;
+  return `${baseUrl}${geonetworkPath}/srv/api/records/${uuid}`;
 };
 
 async function sync() {
@@ -215,6 +222,7 @@ async function sync() {
 
         const formattedMenus = formatMenusRecursive(menus);
         const menuTree = buildMenuTree(formattedMenus);
+
         // Dynamically import email notification functions
         const { initializeMailjet, sendErrorEmails } = await import(
           "../lib/email-notifications.js"

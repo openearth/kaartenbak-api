@@ -21,10 +21,10 @@ export const instances = [
     name: "nl2120",
     datoApiKey: process.env.DATO_API_KEY_NL2120,
   },
-  // {
-  //     name: "openearth-rws-viewer",
-  //     datoApiKey: process.env.DATO_API_KEY_OPENEARTH_RWS_VIEWER,
-  // },
+  {
+    name: "openearth-rws-viewer",
+    datoApiKey: process.env.DATO_API_KEY_OPENEARTH_RWS_VIEWER,
+  },
 ];
 
 const viewersWithLayersQuery = /* graphql */ `

@@ -17,14 +17,14 @@ dotenv.config({
 });
 
 export const instances = [
-  {
-    name: "nl2120",
-    datoApiKey: process.env.DATO_API_KEY_NL2120,
-  },
   // {
-  //   name: "openearth-rws-viewer",
-  //   datoApiKey: process.env.DATO_API_KEY_OPENEARTH_RWS_VIEWER,
+  //   name: "nl2120",
+  //   datoApiKey: process.env.DATO_API_KEY_NL2120,
   // },
+  {
+    name: "openearth-rws-viewer",
+    datoApiKey: process.env.DATO_API_KEY_OPENEARTH_RWS_VIEWER,
+  },
 ];
 
 const viewersWithLayersQuery = /* graphql */ `
@@ -168,6 +168,7 @@ const syncExternalMetadata = async (externalMetadatas) => {
         body: transformedXml,
       });
     } catch (error) {
+      console.log(error);
       throw new Error(
         `Error syncing external metadata for ${transformedSource} to ${destination.geonetwork.baseUrl}:`,
         error

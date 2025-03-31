@@ -107,6 +107,7 @@ export async function sendErrorEmails(
   fromEmail = process.env.MAILJET_FROM_EMAIL,
   contactsField = "errorNotificationContacts"
 ) {
+  return;
   const contacts = findEmailContacts(menuTree, contactsField);
 
   for (const email of contacts) {

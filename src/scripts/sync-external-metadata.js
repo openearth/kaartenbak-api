@@ -168,6 +168,7 @@ const syncExternalMetadata = async (externalMetadatas) => {
         body: transformedXml,
       });
     } catch (error) {
+      console.log(error);
       throw new Error(
         `Error syncing external metadata for ${transformedSource} to ${destination.geonetwork.baseUrl}:`,
         error

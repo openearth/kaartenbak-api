@@ -237,7 +237,13 @@ async function sync() {
           apiSecret: process.env.MAILJET_API_SECRET,
         });
 
-        await sendErrorEmails(menuTree, instance.name, error, mailjet);
+        await sendErrorEmails(
+          menuTree,
+          instance.name,
+          error,
+          mailjet,
+          process.env.MAILJET_FROM_EMAIL
+        );
       } catch (emailError) {
         console.error("Error sending notification emails:", emailError);
       }

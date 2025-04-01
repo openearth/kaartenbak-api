@@ -4,10 +4,7 @@ import Mailjet from "node-mailjet";
  * Initialize the Mailjet client
  * @returns {Object} Configured Mailjet client
  */
-export function initializeMailjet({
-  apiKey = process.env.MAILJET_API_TOKEN,
-  apiSecret = process.env.MAILJET_API_SECRET,
-}) {
+export function initializeMailjet({ apiKey, apiSecret }) {
   return new Mailjet({
     apiKey,
     apiSecret,
@@ -104,7 +101,7 @@ export async function sendErrorEmails(
   instanceName,
   error,
   mailjet,
-  fromEmail = process.env.MAILJET_FROM_EMAIL,
+  fromEmail,
   contactsField = "errorNotificationContacts"
 ) {
   const contacts = findEmailContacts(menuTree, contactsField);

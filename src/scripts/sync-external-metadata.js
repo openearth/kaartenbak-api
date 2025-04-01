@@ -132,7 +132,10 @@ const syncExternalMetadata = async (externalMetadatas) => {
     }
 
     const geoNetworkUrl =
-      destination.geonetwork.baseUrl + "/geonetwork/srv/api";
+      destination.geonetwork.baseUrl +
+      (destination.geonetwork.baseUrl.endsWith("/")
+        ? "geonetwork/srv/api"
+        : "/geonetwork/srv/api");
 
     const transformedSource = transformSourceUrl(sourceUrl);
 

@@ -1,22 +1,23 @@
-import fetch from 'node-fetch'
+import fetch from "node-fetch";
+import https from "https";
 
 class GeoNetworkError extends Error {
   constructor(description, error) {
-    super(`${description}\n\n${JSON.stringify(error, null, 2)}`)
+    super(`${description}\n\n${JSON.stringify(error, null, 2)}`);
 
-    this.code = error.code
+    this.code = error.code;
   }
 }
 
 export class Geonetwork {
-  #baseUrl
-  #username
-  #password
+  #baseUrl;
+  #username;
+  #password;
 
   constructor(baseUrl, username, password) {
-    this.#baseUrl = baseUrl
-    this.#username = username
-    this.#password = password
+    this.#baseUrl = baseUrl;
+    this.#username = username;
+    this.#password = password;
   }
 
   async #request({
@@ -30,71 +31,75 @@ export class Geonetwork {
     params = {},
   }) {
     // Request to get X-XSRF-TOKEN and Cookie: see docs https://geonetwork-opensource.org/manuals/3.10.x/en/customizing-application/misc.html
-    const me = await fetch(this.#baseUrl + '/me', {
-      method: 'POST',
+    const me = await fetch(this.#baseUrl + "/me", {
+      method: "POST",
       headers: {
-        Accept: 'application/json',
+        Accept: "application/json",
       },
-    })
+      // TODO: Remove this once we have a valid certificate
+      agent: new https.Agent({
+        rejectUnauthorized: false,
+      }),
+    });
 
-    const cookie = me.headers.get('set-cookie')
+    const cookie = me.headers.get("set-cookie");
 
-    const token = cookie.split(';')[0].split('=')[1]
+    const token = cookie.split(";")[0].split("=")[1];
     const basicAuth =
-      'Basic ' +
-      Buffer.from(this.#username + ':' + this.#password).toString('base64')
+      "Basic " +
+      Buffer.from(this.#username + ":" + this.#password).toString("base64");
 
-    const requestUrl = new URL(this.#baseUrl + url)
+    const requestUrl = new URL(this.#baseUrl + url);
 
     Object.entries(params).forEach(([key, value]) => {
-      requestUrl.searchParams.set(key, value)
-    })
+      requestUrl.searchParams.set(key, value);
+    });
 
     // Use X-XSRF-TOKEN and Cookie in the request
     return fetch(requestUrl.toString(), {
       method: method,
-      ...(method !== 'GET' && { body }),
+      ...(method !== "GET" && { body }),
       headers: {
         Authorization: basicAuth,
-        'X-XSRF-TOKEN': token,
+        "X-XSRF-TOKEN": token,
         Cookie: cookie.toString(),
-        accept: 'application/json',
+        accept: "application/json",
         ...headers,
       },
     }).then(async (res) => {
       if (!res.ok) {
-        const error = await res.json()
+        const error = await res.json();
 
-        throw new GeoNetworkError(`Error while posting to ${url}`, error)
+        throw new GeoNetworkError(`Error while posting to ${url}`, error);
       }
 
       if (options.responseText) {
-        return res.text()
+        return res.text();
       }
 
-      return res.json()
-    })
+      return res.json();
+    });
   }
 
   recordsRequest(arg) {
-    let url = '/records'
+    let url = "/records";
 
     if (arg.url) {
-      url += arg.url
+      url += arg.url;
     }
 
     if (arg.params) {
       const params = new URLSearchParams(arg.params);
-      if (url.includes('?')) {
-        url += '&' + params.toString();
+      if (url.includes("?")) {
+        url += "&" + params.toString();
       } else {
-        url += '?' + params.toString();
+        url += "?" + params.toString();
       }
     }
 
     return this.#request({
       ...arg,
       url,
-    })
+    });
   }
 }

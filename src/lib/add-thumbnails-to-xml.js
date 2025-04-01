@@ -10,10 +10,12 @@ export function addThumbnailsToXml(xmlString, thumbnails) {
   }
 
   // Find the first graphicOverview tag to insert before existing thumbnails
-  const firstGraphicOverviewIndex = xmlString.indexOf('<gmd:graphicOverview>');
+  const firstGraphicOverviewIndex = xmlString.indexOf("<gmd:graphicOverview>");
 
   // If no existing thumbnails, find a suitable insertion point after descriptiveKeywords
-  const insertAfterDescriptiveKeywords = xmlString.lastIndexOf('</gmd:descriptiveKeywords>');
+  const insertAfterDescriptiveKeywords = xmlString.lastIndexOf(
+    "</gmd:descriptiveKeywords>"
+  );
 
   // Determine where to insert the new thumbnails
   let insertPoint;
@@ -21,21 +23,22 @@ export function addThumbnailsToXml(xmlString, thumbnails) {
     // Insert before existing thumbnails
     insertPoint = firstGraphicOverviewIndex;
     // We'll insert directly at this position, without any trailing text
-    var trailingText = '';
+    var trailingText = "";
   } else if (insertAfterDescriptiveKeywords !== -1) {
     // No existing thumbnails, insert after descriptiveKeywords
-    insertPoint = insertAfterDescriptiveKeywords + '</gmd:descriptiveKeywords>'.length;
+    insertPoint =
+      insertAfterDescriptiveKeywords + "</gmd:descriptiveKeywords>".length;
     // We'll insert at this position, without any leading text
-    var trailingText = '';
+    var trailingText = "";
   } else {
-    console.error('Could not find a suitable place to insert thumbnails');
+    console.error("Could not find a suitable place to insert thumbnails");
     return xmlString;
   }
 
-  let thumbnailsXml = '';
-  thumbnails.forEach(thumbnail => {
+  let thumbnailsXml = "";
+  thumbnails.forEach((thumbnail) => {
     thumbnailsXml += `
-<gmd:graphicOverview>
+<gmd:graphicOverview xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gco="http://www.isotc211.org/2005/gco">
   <gmd:MD_BrowseGraphic>
     <gmd:fileName>
       <gco:CharacterString>${thumbnail.url}</gco:CharacterString>
@@ -47,7 +50,9 @@ export function addThumbnailsToXml(xmlString, thumbnails) {
 </gmd:graphicOverview>`;
   });
 
-  return xmlString.slice(0, insertPoint) +
+  return (
+    xmlString.slice(0, insertPoint) +
     thumbnailsXml +
-    xmlString.slice(insertPoint);
-} 
+    xmlString.slice(insertPoint)
+  );
+}

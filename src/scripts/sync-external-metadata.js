@@ -146,17 +146,23 @@ const syncExternalMetadata = async (externalMetadatas) => {
         destination.geonetwork.password
       );
 
-      const xml = await fetch(`${transformedSource}/formatters/xml`).then(
-        (res) => {
-          if (!res.ok) {
-            throw new Error(
-              `Failed to fetch ${transformedSource} with status ${res.status}`
-            );
-          }
+      const xmlUrl = `${transformedSource}/formatters/xml`;
 
-          return res.text();
+      const xml = await fetch(xmlUrl, {
+        method: "GET",
+        headers: {
+          Accept: "application/xml",
+          "Accept-Language": "en-US,en;q=0.5",
+        },
+      }).then((res) => {
+        if (!res.ok) {
+          throw new Error(
+            `Failed to fetch ${xmlUrl} with status ${res.status}`
+          );
         }
-      );
+
+        return res.text();
+      });
 
       // Use the chainable transformer
       const transformedXml = transform(xml)

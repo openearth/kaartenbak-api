@@ -1,14 +1,14 @@
-import xmlEscape from 'xml-escape'
+import xmlEscape from "xml-escape";
 
 export function formatLinks(links) {
   if (!links?.length) {
-    return ''
+    return "";
   }
 
   return links
     .map(
       (link) => /* xml */ `
-    <gmd:onLine>
+    <gmd:onLine xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gco="http://www.isotc211.org/2005/gco">
       <gmd:CI_OnlineResource>
         <gmd:linkage>
           <gmd:URL>${xmlEscape(link.url)}</gmd:URL>
@@ -34,5 +34,5 @@ export function formatLinks(links) {
     </gmd:onLine>
     `
     )
-    .join('')
+    .join("");
 }

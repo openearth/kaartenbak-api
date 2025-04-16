@@ -147,7 +147,15 @@ const syncExternalMetadata = async (externalMetadatas) => {
       );
 
       const xml = await fetch(`${transformedSource}/formatters/xml`).then(
-        (res) => res.text()
+        (res) => {
+          if (!res.ok) {
+            throw new Error(
+              `Failed to fetch ${transformedSource} with status ${res.status}`
+            );
+          }
+
+          return res.text();
+        }
       );
 
       // Use the chainable transformer

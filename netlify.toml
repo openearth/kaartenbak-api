@@ -20,3 +20,10 @@
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
+
+[[headers]]
+   for = "/*"   
+   [headers.values]
+      Access-Control-Allow-Origin = "http://krm-dashboard-dev.s3-website-eu-west-1.amazonaws.com"
+      Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+      Access-Control-Allow-Headers = "Content-Type, Authorization"

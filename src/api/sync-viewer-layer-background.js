@@ -167,7 +167,7 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
             url: '?publishToAll=true',
             method: 'PUT',
             headers: {
-              'Content-Type': 'application/json',
+              'Content-Type': 'application/xml',
             },
             body: xml,
           })
@@ -181,7 +181,7 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
             url: '?uuidProcessing=OVERWRITE&publishToAll=true',
             method: 'PUT',
             headers: {
-              'Content-Type': 'application/json',
+              'Content-Type': 'application/xml',
             },
             body: xml,
           })

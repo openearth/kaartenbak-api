@@ -33,6 +33,10 @@ export async function addThumbnailsToRecord(thumbnails, recordId, geonetwork) {
     await geonetwork.recordsRequest({
       url: `/${attachment.metadataId}/processes/thumbnail-remove?thumbnail_url=${attachment.url}&process=thumbnail-remove&id=${attachment.metadataId}`,
       method: 'POST',
+      headers: {
+        accept: 'application/xml',
+        'Content-Type': 'application/json',
+      },
       options: {
         responseText: true,
       },

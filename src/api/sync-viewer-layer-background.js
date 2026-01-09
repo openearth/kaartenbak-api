@@ -61,6 +61,9 @@ export const handler = withServerDefaults(async (event, _) => {
   const data = JSON.parse(event.body)
 
   const id = data.entity.id
+  const eventType = data.event_type
+  
+  console.log('[SYNC] Starting:', { id, eventType })
 
   const { menus } = await datocmsRequest({
     query: viewersWithViewerLayersQuery,
@@ -77,9 +80,11 @@ export const handler = withServerDefaults(async (event, _) => {
     } else if (type === 'menu') {
       await syncViewer(menuTree, data.event_type, id)
     }
+    
+    console.log('[SYNC] Success:', id)
   }
   catch (e) {
-    console.log('The following error occured', e.message)
+    console.error('[SYNC] Error:', e.message)
 
     for (let email of findEmailContactsForId(menuTree, id)) {
       console.log('Sending email to', email)
@@ -144,6 +149,11 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
 
   const geonetworkInstancesArray = Array.from(geonetworkInstances)
 
+  if (geonetworkInstancesArray.length === 0) {
+    console.warn('[SYNC] No GeoNetwork instances found for:', viewerLayerId)
+    return
+  }
+
   const xml = await fetchViewerLayerXML({ id: viewerLayerId })
 
   // Can occur when no update needs to be done (because there is no factsheet or inspireMetadata)
@@ -154,14 +164,16 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
   const requestsPromises = geonetworkInstancesArray.map(
     async ([_, geonetworkInstance]) => {
       const { baseUrl, username, password } = geonetworkInstance
+      const geonetworkUrl = baseUrl + 'geonetwork/srv/api'
 
       const geonetwork = new Geonetwork(
-        baseUrl + 'geonetwork/srv/api',
+        geonetworkUrl,
         username,
         password
       )
 
-      switch (eventType) {
+      try {
+        switch (eventType) {
         case 'create': {
           await geonetwork.recordsRequest({
             url: '?publishToAll=true',
@@ -171,6 +183,7 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
             },
             body: xml,
           })
+          console.log('[SYNC] Record created successfully in GeoNetwork:', baseUrl)
 
           break
         }
@@ -185,6 +198,7 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
             },
             body: xml,
           })
+          console.log('[SYNC] Record updated successfully in GeoNetwork:', baseUrl)
 
           break
         }
@@ -200,6 +214,10 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
           })
 
           await addThumbnailsToRecord(viewerLayer?.layer?.thumbnails, viewerLayerId, geonetwork)
+      }
+      } catch (error) {
+        console.error('[SYNC] GeoNetwork error:', baseUrl, error.message)
+        throw error
       }
     }
   )

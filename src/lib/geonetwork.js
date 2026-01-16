@@ -1,5 +1,6 @@
 import fetch from "node-fetch";
 import https from "https";
+import http from "http";
 
 class GeoNetworkError extends Error {
   constructor(description, error) {
@@ -13,11 +14,21 @@ export class Geonetwork {
   #baseUrl;
   #username;
   #password;
+  #agent;
 
   constructor(baseUrl, username, password) {
     this.#baseUrl = baseUrl;
     this.#username = username;
     this.#password = password;
+    
+    // Determine agent based on URL protocol
+    if (baseUrl.startsWith('https://')) {
+      this.#agent = new https.Agent({
+        rejectUnauthorized: false,
+      });
+    } else {
+      this.#agent = new http.Agent();
+    }
   }
 
   async #request({
@@ -36,10 +47,7 @@ export class Geonetwork {
       headers: {
         Accept: "application/json",
       },
-      // TODO: Remove this once we have a valid certificate
-      agent: new https.Agent({
-        rejectUnauthorized: false,
-      }),
+      agent: this.#agent,
     });
 
     const cookie = me.headers.get("set-cookie");
@@ -66,6 +74,7 @@ export class Geonetwork {
         accept: "application/json",
         ...headers,
       },
+      agent: this.#agent,
     }).then(async (res) => {
       if (!res.ok) {
         const error = await res.json();

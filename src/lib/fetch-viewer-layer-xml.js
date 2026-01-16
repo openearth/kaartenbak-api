@@ -2,6 +2,7 @@ import { datocmsRequest } from './datocms'
 import https from 'https'
 import { format as formatInspireMetadataXml } from './format-inspire-metadata-xml'
 import { format as formatFactsheetXml } from './format-factsheet-xml'
+import { transform } from './xml-transformer.js'
 import fetch from 'node-fetch'
 import convert from 'xml-js'
 
@@ -10,6 +11,7 @@ query LayerById($id: ItemId) {
   viewerLayer(filter: {id: {eq: $id}}) {
     id
     useFactsheetAsMetadata
+    externalMetadata
     inspireMetadata {
       _updatedAt
       citationTitle
@@ -99,6 +101,9 @@ query LayerById($id: ItemId) {
       url
       layer
       indexableWfsProperties
+      thumbnails {
+        url
+      }
     }
   }
 }
@@ -123,6 +128,15 @@ function recursivelyFindLayer(layers, name) {
   }
 
   return null
+}
+// Add this function before fetchViewerLayerXML
+const transformSourceUrl = (sourceUrl) => {
+  const url = new URL(sourceUrl)
+  const baseUrl = url.origin
+  const uuid = sourceUrl.split("/").pop()
+  const geonetworkPath = url.pathname.split("/").slice(0, 2).join("/")
+
+  return `${baseUrl}${geonetworkPath}/srv/api/records/${uuid}`
 }
 
 export async function fetchViewerLayerXML({ id }) {
@@ -176,6 +190,40 @@ export async function fetchViewerLayerXML({ id }) {
       layerInfo,
       layer: data.layer,
     })
+  }
+  else if (data.layer.externalMetadata) {
+    // Transform the source URL to API format
+    const transformedSource = transformSourceUrl(data.layer.externalMetadata);
+    const xmlUrl = `${transformedSource}/formatters/xml`
+
+    // Fetch the XML from the source GeoNetwork
+    const xml = await fetch(xmlUrl, {
+      method: "GET",
+      headers: {
+        Accept: "application/xml",
+        "Accept-Language": "en-US,en;q=0.5",
+      },
+    }).then((res) => {
+      if (!res.ok) {
+        throw new Error(
+          `Failed to fetch ${xmlUrl} with status ${res.status}`
+        );
+      }
+      return res.text()
+    });
+
+    // Prepare thumbnails in the format expected by transform
+    const thumbnails = data.layer.layer?.thumbnails?.map((thumbnail) => ({
+      url: thumbnail.url,
+      filename: `Kaarttitel: ${data.layer.name || data.layer.layer?.name || 'Layer'}`,
+    })) || []
+
+    // Transform the XML: add thumbnails, links, and replace ID
+    formatted = transform(xml)
+      .addThumbnails(thumbnails)
+      .addLinks(data.layer.links || [])
+      .replaceId(id)
+      .getXml()
   }
 
   return formatted

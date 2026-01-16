@@ -130,7 +130,7 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
       <gmd:abstract>
         <gco:CharacterString>
           <![CDATA[
-          ${layer.inspireMetadata.abstract}${layer.inspireMetadata.description ? ` - ${layer.inspireMetadata.description}` : ''}
+          ${layer.inspireMetadata.abstract}${layer.inspireMetadata.description ? ` - ${layer.inspireMetadata.description}` : ''}${layerInfo?.Abstract?._text ? `\n\n${layerInfo.Abstract._text}` : layerInfo?.Abstract ? `\n\n${layerInfo.Abstract}` : ''}
           ]]></gco:CharacterString>
       </gmd:abstract>
 

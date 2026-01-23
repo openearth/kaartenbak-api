@@ -6,6 +6,7 @@ import { datocmsRequest } from "../lib/datocms.js";
 import { buildMenuTree } from "../lib/build-menu-tree.js";
 import { Geonetwork } from "../lib/geonetwork.js";
 import { transform } from "../lib/xml-transformer.js";
+import { fetchExternalMetadataXml } from "../lib/external-metadata-utils.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -137,8 +138,6 @@ const syncExternalMetadata = async (externalMetadatas) => {
         ? "geonetwork/srv/api"
         : "/geonetwork/srv/api");
 
-    const transformedSource = transformSourceUrl(sourceUrl);
-
     try {
       const geonetwork = new Geonetwork(
         geoNetworkUrl,
@@ -146,23 +145,8 @@ const syncExternalMetadata = async (externalMetadatas) => {
         destination.geonetwork.password
       );
 
-      const xmlUrl = `${transformedSource}/formatters/xml`;
-
-      const xml = await fetch(xmlUrl, {
-        method: "GET",
-        headers: {
-          Accept: "application/xml",
-          "Accept-Language": "en-US,en;q=0.5",
-        },
-      }).then((res) => {
-        if (!res.ok) {
-          throw new Error(
-            `Failed to fetch ${xmlUrl} with status ${res.status}`
-          );
-        }
-
-        return res.text();
-      });
+      // Use the shared utility function
+      const xml = await fetchExternalMetadataXml(sourceUrl);
 
       // Use the chainable transformer
       const transformedXml = transform(xml)
@@ -187,25 +171,16 @@ const syncExternalMetadata = async (externalMetadatas) => {
     } catch (error) {
       console.log(error);
       throw new Error(
-        `Error syncing external metadata for ${transformedSource} to ${destination.geonetwork.baseUrl}:`,
+        `Error syncing external metadata for ${sourceUrl} to ${destination.geonetwork.baseUrl}:`,
         error
       );
     }
 
     console.log("Sync completed:");
-    console.log(`  Source: ${transformedSource}`);
+    console.log(`  Source: ${sourceUrl}`);
     console.log(`  Destination: ${destination.geonetwork.baseUrl}`);
     console.log(`  Record ID: ${externalMetadata.metadata.id}`);
   }
-};
-
-const transformSourceUrl = (sourceUrl) => {
-  const url = new URL(sourceUrl);
-  const baseUrl = url.origin;
-  const uuid = sourceUrl.split("/").pop();
-  const geonetworkPath = url.pathname.split("/").slice(0, 2).join("/");
-
-  return `${baseUrl}${geonetworkPath}/srv/api/records/${uuid}`;
 };
 
 async function sync() {

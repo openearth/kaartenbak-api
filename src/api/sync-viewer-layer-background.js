@@ -111,8 +111,6 @@ export const handler = withServerDefaults(async (event, _) => {
     } else {
       console.log('[LOG] Ignored webhook type', { reqId, type })
     }
-
-    console.log('[LOG] Success', { reqId, id, eventType, type })
   } catch (e) {
     console.error('[LOG] Error', { reqId, id, eventType, err: e.message })
 
@@ -172,7 +170,7 @@ async function syncViewer(menuTree, eventType, viewerId) {
 }
 
 async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
-  console.log('[LOG] Starting sync for viewer layer', { viewerLayerId, eventType })
+  console.log('[LOG] Found viewer layer', { viewerLayerId, eventType })
   
   const geonetworkInstances = findGeonetworkInstances(menuTree, viewerLayerId)
   const geonetworkInstancesArray = Array.from(geonetworkInstances)
@@ -219,11 +217,12 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
     const errorMessage = `<ul>${errors.map((error) => `<li>${error.reason}</li>`).join('')}</ul>`
     throw new Error(errorMessage)
   }
+
+  console.log('[LOG] Successfully published XML to all GeoNetwork instances', { viewerLayerId, metadataType, instanceCount: geonetworkInstancesArray.length })
 }
 
 function findEmailContactsForId(menuTree, id) {
   const contacts = new Set()
-
   menuTree.forEach((viewer) => {
     const findInMenu = (menu) => {
       const { children } = menu
@@ -243,10 +242,8 @@ function findEmailContactsForId(menuTree, id) {
         })
       }
     }
-
     findInMenu(viewer)
   })
-
   return contacts
 }
 

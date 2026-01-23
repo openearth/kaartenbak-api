@@ -30,9 +30,18 @@ export const handler = withServerDefaults(async (event, _) => {
     }
   }
 
-  let formatted = await fetchViewerLayerXML({
+  const result = await fetchViewerLayerXML({
     id,
   })
+
+  if (!result) {
+    return {
+      statusCode: 404,
+      body: JSON.stringify({ error: 'No metadata found for this layer' }),
+    }
+  }
+
+  let formatted = result.xml
 
   if (format === 'json') {
     formatted = convert.xml2json(formatted, {

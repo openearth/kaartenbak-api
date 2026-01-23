@@ -163,6 +163,7 @@ export async function fetchViewerLayerXML({ id }) {
   const layerInfo = recursivelyFindLayer(capabilities.WMS_Capabilities.Capability.Layer, data.layer.layer)
 
   let formatted = null
+  let metadataType = null
 
   if (data.layer.useFactsheetAsMetadata) {
     const factsheet = data.layer.factsheets[0]
@@ -174,6 +175,7 @@ export async function fetchViewerLayerXML({ id }) {
         layer: data.layer,
         factsheet,
       })
+      metadataType = 'factsheet'
     }
 
   } else if (data.layer.inspireMetadata) {
@@ -182,6 +184,7 @@ export async function fetchViewerLayerXML({ id }) {
       layerInfo,
       layer: data.layer,
     })
+    metadataType = 'inspire'
   }
   else if (data.layer.externalMetadata) {
     // Use the shared utility function
@@ -199,7 +202,8 @@ export async function fetchViewerLayerXML({ id }) {
       .addLinks(data.layer.links || [])
       .replaceId(id)
       .getXml()
+    metadataType = 'external'
   }
 
-  return formatted
+  return formatted ? { xml: formatted, metadataType } : null
 }

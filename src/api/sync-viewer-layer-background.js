@@ -60,7 +60,7 @@ function getHeader(event, name) {
 export const handler = withServerDefaults(async (event, _) => {
   const reqId = getRequestId(event)
 
-  console.log('[SYNC] Invoked', {
+  console.log('[LOG] Invoked', {
     reqId,
     path: event.path,
     method: event.httpMethod,
@@ -69,7 +69,7 @@ export const handler = withServerDefaults(async (event, _) => {
 
   const incomingKey = getHeader(event, 'x-api-key')
   if (process.env.SYNC_LAYER_API_TOKEN !== incomingKey) {
-    console.warn('[SYNC] Unauthorized', { reqId, hasKey: Boolean(incomingKey) })
+    console.warn('[LOG] Unauthorized', { reqId, hasKey: Boolean(incomingKey) })
     return { statusCode: 401 }
   }
 
@@ -77,13 +77,13 @@ export const handler = withServerDefaults(async (event, _) => {
   try {
     data = JSON.parse(event.body)
   } catch (e) {
-    console.error('[SYNC] Invalid JSON body', { reqId, err: e.message })
+    console.error('[LOG] Invalid JSON body', { reqId, err: e.message })
     return { statusCode: 400 }
   }
 
   const id = data?.entity?.id
   const eventType = data?.event_type
-  console.log('[SYNC] Starting', { reqId, id, eventType })
+  console.log('[LOG] Starting', { reqId, id, eventType })
 
   let menuTree = null
   try {
@@ -98,7 +98,7 @@ export const handler = withServerDefaults(async (event, _) => {
     const itemTypeEntity = data?.related_entities?.find((entity) => entity?.type === 'item_type')
     const type = itemTypeEntity?.attributes?.api_key
 
-    console.log('[SYNC] Webhook type resolved', { reqId, type })
+    console.log('[LOG] Webhook type resolved', { reqId, type })
 
     if (!type) {
       throw new Error('No item_type.api_key found in related_entities')
@@ -109,17 +109,17 @@ export const handler = withServerDefaults(async (event, _) => {
     } else if (type === 'menu') {
       await syncViewer(menuTree, eventType, id)
     } else {
-      console.log('[SYNC] Ignored webhook type', { reqId, type })
+      console.log('[LOG] Ignored webhook type', { reqId, type })
     }
 
-    console.log('[SYNC] Success', { reqId, id, eventType, type })
+    console.log('[LOG] Success', { reqId, id, eventType, type })
   } catch (e) {
-    console.error('[SYNC] Error', { reqId, id, eventType, err: e.message })
+    console.error('[LOG] Error', { reqId, id, eventType, err: e.message })
 
     if (menuTree && id) {
       const emailContacts = findEmailContactsForId(menuTree, id)
       for (const email of emailContacts) {
-        console.log('[SYNC] Sending email to', { reqId, email })
+        console.log('[LOG] Sending email to', { reqId, email })
         try {
           await mailjet.post('send', { version: 'v3.1' }).request({
             Messages: [
@@ -132,7 +132,7 @@ export const handler = withServerDefaults(async (event, _) => {
             ],
           })
         } catch (emailError) {
-          console.error('[SYNC] Failed to send email', { reqId, email, err: emailError.message })
+          console.error('[LOG] Failed to send email', { reqId, email, err: emailError.message })
         }
       }
     }
@@ -172,31 +172,42 @@ async function syncViewer(menuTree, eventType, viewerId) {
 }
 
 async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
+  console.log('[LOG] Starting sync for viewer layer', { viewerLayerId, eventType })
+  
   const geonetworkInstances = findGeonetworkInstances(menuTree, viewerLayerId)
   const geonetworkInstancesArray = Array.from(geonetworkInstances)
 
   if (geonetworkInstancesArray.length === 0) {
-    console.warn('[SYNC] No GeoNetwork instances found', { viewerLayerId })
+    console.warn('[LOG] No GeoNetwork instances found', { viewerLayerId })
     return
   }
 
-  const xml = await fetchViewerLayerXML({ id: viewerLayerId })
+  console.log('[LOG] Found GeoNetwork instances', { viewerLayerId, count: geonetworkInstancesArray.length })
 
-  if (xml === null) {
-    console.log('[SYNC] No XML returned; skipping', { viewerLayerId })
+  const result = await fetchViewerLayerXML({ id: viewerLayerId })
+
+  if (result === null) {
+    console.log('[LOG] No XML returned; skipping', { viewerLayerId })
     return
   }
+
+  const { xml, metadataType } = result
+  
+  console.log('[LOG] Fetched XML for viewer layer', { viewerLayerId, metadataType })
 
   const requestsPromises = geonetworkInstancesArray.map(async ([_, geonetworkInstance]) => {
     const { baseUrl, username, password } = geonetworkInstance
     const geonetworkUrl = `${baseUrl}geonetwork/srv/api`
     const geonetwork = new Geonetwork(geonetworkUrl, username, password)
 
+    console.log('[LOG] Starting sync to GeoNetwork instance', { viewerLayerId, baseUrl, geonetworkUrl, metadataType, eventType })
+
     try {
-      await syncRecordToGeoNetwork(geonetwork, eventType, xml, baseUrl)
-      await syncThumbnails(geonetwork, eventType, viewerLayerId)
+      await syncRecordToGeoNetwork(geonetwork, eventType, xml, baseUrl, metadataType, geonetworkUrl)
+      await syncThumbnails(geonetwork, eventType, viewerLayerId, baseUrl, metadataType, geonetworkUrl)
+      console.log('[LOG] Completed sync to GeoNetwork instance', { viewerLayerId, baseUrl, geonetworkUrl, metadataType })
     } catch (error) {
-      console.error('[SYNC] GeoNetwork error', { baseUrl, err: error.message })
+      console.error('[LOG] GeoNetwork error', { viewerLayerId, baseUrl, geonetworkUrl, metadataType, err: error.message })
       throw error
     }
   })
@@ -239,7 +250,7 @@ function findEmailContactsForId(menuTree, id) {
   return contacts
 }
 
-async function syncRecordToGeoNetwork(geonetwork, eventType, xml, baseUrl) {
+async function syncRecordToGeoNetwork(geonetwork, eventType, xml, baseUrl, metadataType, geonetworkUrl) {
   switch (eventType) {
     case 'create': {
       await geonetwork.recordsRequest({
@@ -248,7 +259,7 @@ async function syncRecordToGeoNetwork(geonetwork, eventType, xml, baseUrl) {
         headers: { 'Content-Type': 'application/xml' },
         body: xml,
       })
-      console.log('[SYNC] Record created in GeoNetwork', { baseUrl })
+      console.log('[LOG] Record created in GeoNetwork', { baseUrl, geonetworkUrl, metadataType })
       break
     }
 
@@ -260,16 +271,18 @@ async function syncRecordToGeoNetwork(geonetwork, eventType, xml, baseUrl) {
         headers: { 'Content-Type': 'application/xml' },
         body: xml,
       })
-      console.log('[SYNC] Record updated in GeoNetwork', { baseUrl })
+      console.log('[LOG] Record updated in GeoNetwork', { baseUrl, geonetworkUrl, metadataType })
       break
     }
   }
 }
 
-async function syncThumbnails(geonetwork, eventType, viewerLayerId) {
+async function syncThumbnails(geonetwork, eventType, viewerLayerId, baseUrl, metadataType, geonetworkUrl) {
   if (eventType !== 'create' && eventType !== 'update' && eventType !== 'publish') {
     return
   }
+
+  console.log('[LOG] Syncing thumbnails', { viewerLayerId, baseUrl, geonetworkUrl, metadataType })
 
   const { viewerLayer } = await datocmsRequest({
     query: viewerLayerByIdQuery,
@@ -277,4 +290,6 @@ async function syncThumbnails(geonetwork, eventType, viewerLayerId) {
   })
 
   await addThumbnailsToRecord(viewerLayer?.layer?.thumbnails, viewerLayerId, geonetwork)
+  
+  console.log('[LOG] Thumbnails synced', { viewerLayerId, baseUrl, geonetworkUrl, metadataType })
 }

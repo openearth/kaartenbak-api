@@ -18,15 +18,18 @@ dotenv.config({
 });
 
 export const instances = [
-  // {
-  //   name: "nl2120",
-  //   datoApiKey: process.env.DATO_API_KEY_NL2120,
-  // },
-  {
+   {
+     name: "nl2120",
+     datoApiKey: process.env.DATO_API_KEY_NL2120,
+   },
+ /*  {
     name: "openearth-rws-viewer",
     datoApiKey: process.env.DATO_API_KEY_OPENEARTH_RWS_VIEWER,
-  },
+  }, */
 ];
+
+/** Set to true to skip publishing to GeoNetwork (for testing). */
+const SKIP_GEONETWORK_PUBLISH = false;
 
 const viewersWithLayersQuery = /* graphql */ `
 query viewersWithLayers($first: IntType, $skip: IntType = 0, $locale: SiteLocale = en) {
@@ -155,25 +158,29 @@ const syncExternalMetadata = async (externalMetadatas) => {
         .replaceId(externalMetadata.metadata.id)
         .getXml();
 
-      await geonetwork.recordsRequest({
-        method: "PUT",
-        params: {
-          metadataType: "METADATA",
-          uuidProcessing: "OVERWRITE",
-          publishToAll: "true",
-        },
-        headers: {
-          Accept: "application/json, text/plain, */*",
-          "Content-Type": "application/xml",
-        },
-        body: transformedXml,
-      });
+      if (!SKIP_GEONETWORK_PUBLISH) {
+        await geonetwork.recordsRequest({
+          method: "PUT",
+          params: {
+            metadataType: "METADATA",
+            uuidProcessing: "OVERWRITE",
+            publishToAll: "true",
+          },
+          headers: {
+            Accept: "application/json, text/plain, */*",
+            "Content-Type": "application/xml",
+          },
+          body: transformedXml,
+        });
+      } else {
+        console.log("(Skipped GeoNetwork publish – testing mode)");
+      }
     } catch (error) {
-      console.log(error);
-      throw new Error(
+      console.error(
         `Error syncing external metadata for ${sourceUrl} to ${destination.geonetwork.baseUrl}:`,
         error
       );
+      continue;
     }
 
     console.log("Sync completed:");
@@ -187,7 +194,6 @@ async function sync() {
   for (const instance of instances) {
     try {
       console.log(`Starting sync for ${instance.name}...`);
-
       const { menus } = await datocmsRequest({
         query: viewersWithLayersQuery,
         token: instance.datoApiKey,
@@ -210,7 +216,7 @@ async function sync() {
         const { menus } = await datocmsRequest({
           query: viewersWithLayersQuery,
           token: instance.datoApiKey,
-          environment: "data-harvest-test-environment",
+          environment: "main",
         });
 
         const formattedMenus = formatMenusRecursive(menus);

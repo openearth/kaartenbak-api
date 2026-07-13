@@ -89,6 +89,7 @@ const findExternalMetadata = (menuTree) => {
         name,
         links,
         id,
+        layerId,
       } = child;
 
       if (geonetwork) {
@@ -103,6 +104,7 @@ const findExternalMetadata = (menuTree) => {
           },
           metadata: {
             id,
+            layerId,
             thumbnails:
               thumbnails?.map((thumbnail) => {
                 return {
@@ -148,14 +150,22 @@ const syncExternalMetadata = async (externalMetadatas) => {
         destination.geonetwork.password
       );
 
+      const viewerLayerId = externalMetadata.metadata.id;
+      const layerId = externalMetadata.metadata.layerId;
+
+      const viewerLayerExists = await geonetwork.recordExists(viewerLayerId);
+      const layerExists = layerId ? await geonetwork.recordExists(layerId) : false;
+
+      const action = viewerLayerExists ? "updated" : layerExists ? "migrated from layerId" : "created";
+
       // Use the shared utility function
       const xml = await fetchExternalMetadataXml(sourceUrl);
 
-      // Use the chainable transformer
+      // Always write under viewerLayerId as the canonical UUID
       const transformedXml = transform(xml)
         .addThumbnails(externalMetadata.metadata.thumbnails)
         .addLinks(externalMetadata.metadata.links)
-        .replaceId(externalMetadata.metadata.id)
+        .replaceId(viewerLayerId)
         .getXml();
 
       if (!SKIP_GEONETWORK_PUBLISH) {
@@ -172,9 +182,25 @@ const syncExternalMetadata = async (externalMetadatas) => {
           },
           body: transformedXml,
         });
+
+        // Remove legacy layerId record to prevent duplicates
+        if (layerExists) {
+          console.log(`  Deleting legacy layerId record: ${layerId}`);
+          await geonetwork.deleteRecord(layerId);
+        }
       } else {
         console.log("(Skipped GeoNetwork publish – testing mode)");
+        console.log(`  Would ${action} record: ${viewerLayerId}`);
+        if (layerExists) {
+          console.log(`  Would delete legacy layerId record: ${layerId}`);
+        }
       }
+
+      console.log("Sync completed:");
+      console.log(`  Source: ${sourceUrl}`);
+      console.log(`  Destination: ${destination.geonetwork.baseUrl}`);
+      console.log(`  Record ID (viewerLayerId): ${viewerLayerId}`);
+      console.log(`  Action: ${action}`);
     } catch (error) {
       console.error(
         `Error syncing external metadata for ${sourceUrl} to ${destination.geonetwork.baseUrl}:`,
@@ -182,11 +208,6 @@ const syncExternalMetadata = async (externalMetadatas) => {
       );
       continue;
     }
-
-    console.log("Sync completed:");
-    console.log(`  Source: ${sourceUrl}`);
-    console.log(`  Destination: ${destination.geonetwork.baseUrl}`);
-    console.log(`  Record ID: ${externalMetadata.metadata.id}`);
   }
 };
 

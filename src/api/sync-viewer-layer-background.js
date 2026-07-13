@@ -41,6 +41,7 @@ const viewerLayerByIdQuery = /* graphql */ `
 query LayerById($id: ItemId) {
   viewerLayer(filter: {id: {eq: $id}}) {
     layer {
+      id
       thumbnails {
         filename
         url
@@ -193,6 +194,13 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
   
   console.log('[LOG] Fetched XML for viewer layer', { viewerLayerId, metadataType })
 
+  // Fetch layerId once (shared across all GeoNetwork instances for this viewer layer)
+  const { viewerLayer } = await datocmsRequest({
+    query: viewerLayerByIdQuery,
+    variables: { id: viewerLayerId },
+  })
+  const layerId = viewerLayer?.layer?.id
+
   const requestsPromises = geonetworkInstancesArray.map(async ([_, geonetworkInstance]) => {
     const { baseUrl, username, password } = geonetworkInstance
     const geonetworkUrl = `${baseUrl}geonetwork/srv/api`
@@ -201,9 +209,22 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
     console.log('[LOG] Starting sync to GeoNetwork instance', { viewerLayerId, baseUrl, geonetworkUrl, metadataType, eventType })
 
     try {
+      const viewerLayerExists = await geonetwork.recordExists(viewerLayerId)
+      const layerExists = layerId ? await geonetwork.recordExists(layerId) : false
+
+      const action = viewerLayerExists ? 'updated' : layerExists ? 'migrated from layerId' : 'created'
+      console.log('[LOG] Record existence check', { viewerLayerId, viewerLayerExists, layerId, layerExists, action })
+
       await syncRecordToGeoNetwork(geonetwork, eventType, xml, baseUrl, metadataType, geonetworkUrl)
+
+      // Remove legacy layerId record to prevent duplicates
+      if (layerExists) {
+        console.log('[LOG] Deleting legacy layerId record', { layerId, baseUrl })
+        await geonetwork.deleteRecord(layerId)
+      }
+
       await syncThumbnails(geonetwork, eventType, viewerLayerId, baseUrl, metadataType, geonetworkUrl)
-      console.log('[LOG] Completed sync to GeoNetwork instance', { viewerLayerId, baseUrl, geonetworkUrl, metadataType })
+      console.log('[LOG] Completed sync to GeoNetwork instance', { viewerLayerId, baseUrl, geonetworkUrl, metadataType, action })
     } catch (error) {
       console.error('[LOG] GeoNetwork error', { viewerLayerId, baseUrl, geonetworkUrl, metadataType, err: error.message })
       throw error

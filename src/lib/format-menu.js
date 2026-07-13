@@ -3,6 +3,7 @@ export function formatMenu(menu) {
     return {
       ...layer,
       ...metadataFields,
+      layerId: layer?.id,
       ...(child && { children: [child] })
     }
   }) || [];

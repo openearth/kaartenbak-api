@@ -111,4 +111,26 @@ export class Geonetwork {
       url,
     });
   }
+
+  async recordExists(recordId) {
+    try {
+      await this.recordsRequest({
+        url: `/${recordId}`,
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  async deleteRecord(recordId) {
+    await this.recordsRequest({
+      url: `/${recordId}`,
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      options: { responseText: true },
+    })
+  }
 }

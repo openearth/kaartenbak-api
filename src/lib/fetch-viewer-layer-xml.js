@@ -131,6 +131,20 @@ function recursivelyFindLayer(layers, name) {
   return null
 }
 
+async function fetchLayerInfo(wmsUrl, layerName, httpsAgent) {
+  const capabilitiesXml = await fetch(`${wmsUrl}?service=WMS&request=GetCapabilities`, {
+    agent: httpsAgent,
+  }).then((res) => res.text())
+
+  const capabilities = JSON.parse(convert.xml2json(capabilitiesXml, { compact: true }))
+
+  // Support both WMS 1.3.0 (WMS_Capabilities) and WMS 1.1.1 (WMT_MS_Capabilities)
+  const root = capabilities.WMS_Capabilities || capabilities.WMT_MS_Capabilities
+  if (!root) return null
+
+  return recursivelyFindLayer(root.Capability.Layer, layerName)
+}
+
 export async function fetchViewerLayerXML({ id }) {
   const { viewerLayer: {
     layer,
@@ -144,23 +158,9 @@ export async function fetchViewerLayerXML({ id }) {
     }
   }
 
-  const getCapabilitiesUrl = `${data.layer.url}?service=WMS&request=GetCapabilities`
-
   const httpsAgent = new https.Agent({
     rejectUnauthorized: false,
   })
-
-  const capabilitiesXml = await fetch(getCapabilitiesUrl, {
-    agent: httpsAgent,
-  }).then((res) => res.text())
-
-  const capabilities = JSON.parse(
-    convert.xml2json(capabilitiesXml, {
-      compact: true,
-    })
-  )
-
-  const layerInfo = recursivelyFindLayer(capabilities.WMS_Capabilities.Capability.Layer, data.layer.layer)
 
   let formatted = null
   let metadataType = null
@@ -169,6 +169,7 @@ export async function fetchViewerLayerXML({ id }) {
     const factsheet = data.layer.factsheets[0]
 
     if (factsheet) {
+      const layerInfo = await fetchLayerInfo(data.layer.url, data.layer.layer, httpsAgent)
       formatted = formatFactsheetXml({
         id,
         layerInfo,
@@ -179,6 +180,7 @@ export async function fetchViewerLayerXML({ id }) {
     }
 
   } else if (data.layer.inspireMetadata) {
+    const layerInfo = await fetchLayerInfo(data.layer.url, data.layer.layer, httpsAgent)
     formatted = formatInspireMetadataXml({
       id,
       layerInfo,

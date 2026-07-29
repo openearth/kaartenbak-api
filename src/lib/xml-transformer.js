@@ -74,7 +74,7 @@ export class XmlTransformer {
     // Find the fileIdentifier element and replace it with the new ID
     // The pattern matches the entire fileIdentifier element including the CharacterString inside
     this.xml = this.xml.replace(
-      /<gmd:fileIdentifier>[\s\S]*?<gco:CharacterString>.*?<\/gco:CharacterString>[\s\S]*?<\/gmd:fileIdentifier>/,
+      /<[^:>\s]+:fileIdentifier>[\s\S]*?<[^:>\s]+:CharacterString>.*?<\/[^:>\s]+:CharacterString>[\s\S]*?<\/[^:>\s]+:fileIdentifier>/,
       `<gmd:fileIdentifier>\n    <gco:CharacterString>${id}</gco:CharacterString>\n  </gmd:fileIdentifier>`
     );
 

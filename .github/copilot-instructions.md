@@ -58,11 +58,10 @@ export const handler = withServerDefaults(async (event, _) => {
 All DatoCMS access goes through `datocmsRequest` (curried, in `src/lib/datocms.js`). It auto-paginates using `_all<Model>Meta { count }` companion queries. Use the tagged template literal `/* graphql */` on query strings (enables IDE syntax highlighting).
 
 ```js
-const data = await datocmsRequest({ query, variables: { id }, preview: true, token: overrideToken })
+const data = await datocmsRequest({ query, variables: { id }, token: overrideToken })
 ```
 
 - Default token: `DATO_API_TOKEN` env var.
-- Preview environment: pass `preview: true` (used in sync-viewer-layer-background).
 - Default pagination: 100 items per page; supply `_all<Model>Meta { count }` in the query to enable auto-pagination.
 
 ### GeoNetwork client

@@ -203,7 +203,7 @@ Both require the header `x-api-key: <SYNC_LAYER_API_TOKEN>` and a DatoCMS webhoo
 ```
 
 - `event_type` — one of `create`, `update`, `publish` (drives whether GeoNetwork gets a `PUT` create or an `OVERWRITE` publish).
-- `related_entities[].attributes.api_key` (`sync-viewer-layer-background` only) — used to tell a `viewer_layer` webhook apart from a `menu` webhook.
+- `related_entities[].attributes.api_key` (`sync-viewer-layer-background` only) — used to distinguish `viewer_layer`, `menu`, and `inspire_dataset` webhooks.
 
 Responses:
 
@@ -220,10 +220,11 @@ Triggered when a **Layer** is created or published in Dato CMS. The handler rece
 
 ### Viewer layer sync (`sync-viewer-layer-background`)
 
-Triggered when a **Viewer layer** or a **Menu (viewer)** is created, updated, or published in Dato CMS. It uses the **preview** environment and inspects `related_entities` to get the item type.
+Triggered when a **Viewer layer**, **Menu (viewer)**, or **Inspire Dataset** is created, updated, or published in Dato CMS. It inspects `related_entities` to get the item type.
 
 - **Viewer layer** (`viewer_layer`): finds GeoNetwork instances for that viewer layer, fetches the viewer-layer XML (external metadata or generated), then creates or updates the record and thumbnails in each GeoNetwork (create/update/publish).
 - **Menu (viewer)** (`menu`): finds all viewer layers under that viewer and runs the same viewer-layer sync for each.
+- **Inspire Dataset** (`inspire_dataset`): finds all viewer layers whose `inspireMetadata` references the changed dataset and runs the same viewer-layer sync for each. The DatoCMS webhook must include `inspire_dataset` in its item-type filter.
 
 On failure, it sends error emails to the viewer’s `errorNotificationContacts`. The endpoint always returns `202`; errors are logged and emailed, not returned as 5xx.
 

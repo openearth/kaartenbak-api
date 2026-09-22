@@ -50,6 +50,20 @@ query LayerById($id: ItemId) {
   }
 }`
 
+const viewerLayersByInspireDatasetIdQuery = /* graphql */ `
+query ViewerLayersByInspireDatasetId($id: ItemId, $first: IntType, $skip: IntType = 0) {
+  viewerLayers: allViewerLayers(
+    filter: {inspireMetadata: {eq: $id}}
+    first: $first
+    skip: $skip
+  ) {
+    id
+  }
+  _allViewerLayersMeta(filter: {inspireMetadata: {eq: $id}}) {
+    count
+  }
+}`
+
 function getRequestId(event) {
   return event.headers?.['x-nf-request-id'] || event.headers?.['X-Nf-Request-Id'] || 'unknown'
 }
@@ -90,7 +104,6 @@ export const handler = withServerDefaults(async (event, _) => {
   try {
     const { menus } = await datocmsRequest({
       query: viewersWithViewerLayersQuery,
-      preview: true,
     })
 
     const formattedMenus = formatMenusRecursive(menus)
@@ -109,6 +122,8 @@ export const handler = withServerDefaults(async (event, _) => {
       await syncViewerLayers(menuTree, eventType, id)
     } else if (type === 'menu') {
       await syncViewer(menuTree, eventType, id)
+    } else if (type === 'inspire_dataset') {
+      await syncInspireDataset(menuTree, eventType, id)
     } else {
       console.log('[LOG] Ignored webhook type', { reqId, type })
     }
@@ -168,6 +183,30 @@ async function syncViewer(menuTree, eventType, viewerId) {
   )
 
   await Promise.allSettled(requestsPromises)
+}
+
+async function syncInspireDataset(menuTree, eventType, inspireDatasetId) {
+  const { viewerLayers } = await datocmsRequest({
+    query: viewerLayersByInspireDatasetIdQuery,
+    variables: { id: inspireDatasetId },
+  })
+
+  console.log('[LOG] Found viewer layers for INSPIRE dataset', {
+    inspireDatasetId,
+    count: viewerLayers.length,
+  })
+
+  const results = await Promise.allSettled(
+    viewerLayers.map(({ id: viewerLayerId }) =>
+      syncViewerLayers(menuTree, eventType, viewerLayerId)
+    )
+  )
+  const errors = results.filter((result) => result.status === 'rejected')
+
+  if (errors.length) {
+    const errorMessage = `<ul>${errors.map((error) => `<li>${error.reason}</li>`).join('')}</ul>`
+    throw new Error(errorMessage)
+  }
 }
 
 async function syncViewerLayers(menuTree, eventType, viewerLayerId) {

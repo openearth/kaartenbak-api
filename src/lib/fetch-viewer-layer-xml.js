@@ -4,8 +4,7 @@ import { format as formatInspireMetadataXml } from './format-inspire-metadata-xm
 import { format as formatFactsheetXml } from './format-factsheet-xml'
 import { transform } from './xml-transformer.js'
 import { fetchExternalMetadataXml } from './external-metadata-utils.js'
-import fetch from 'node-fetch'
-import convert from 'xml-js'
+import { fetchLayerInfo } from './fetch-layer-info'
 
 const query = /* graphql */ `
 query LayerById($id: ItemId) {
@@ -109,41 +108,6 @@ query LayerById($id: ItemId) {
   }
 }
 `
-
-function recursivelyFindLayer(layers, name) {
-  const layerList = Array.isArray(layers)
-    ? layers
-    : [layers]
-
-  for (let layer of layerList) {
-    if (layer.Name && layer.Name._text === name) {
-      return layer
-    }
-
-    if (layer.Layer) {
-      const foundLayer = recursivelyFindLayer(layer.Layer, name)
-      if (foundLayer) {
-        return foundLayer
-      }
-    }
-  }
-
-  return null
-}
-
-async function fetchLayerInfo(wmsUrl, layerName, httpsAgent) {
-  const capabilitiesXml = await fetch(`${wmsUrl}?service=WMS&request=GetCapabilities`, {
-    agent: httpsAgent,
-  }).then((res) => res.text())
-
-  const capabilities = JSON.parse(convert.xml2json(capabilitiesXml, { compact: true }))
-
-  // Support both WMS 1.3.0 (WMS_Capabilities) and WMS 1.1.1 (WMT_MS_Capabilities)
-  const root = capabilities.WMS_Capabilities || capabilities.WMT_MS_Capabilities
-  if (!root) return null
-
-  return recursivelyFindLayer(root.Capability.Layer, layerName)
-}
 
 export async function fetchViewerLayerXML({ id }) {
   const { viewerLayer: {

@@ -2,8 +2,7 @@ import { datocmsRequest } from './datocms'
 import https from 'https'
 import { format as formatInspireMetadataXml } from './format-inspire-metadata-xml'
 import { format as formatFactsheetXml } from './format-factsheet-xml'
-import fetch from 'node-fetch'
-import convert from 'xml-js'
+import { fetchLayerInfo } from './fetch-layer-info'
 
 const query = /* graphql */ `
 query LayerById($id: ItemId) {
@@ -103,27 +102,6 @@ query LayerById($id: ItemId) {
 }
 `
 
-function recursivelyFindLayer(layers, name) {
-  const layerList = Array.isArray(layers)
-    ? layers
-    : [layers]
-
-  for(let layer of layerList) {
-    if(layer.Name && layer.Name._text === name) {
-      return layer
-    }
-    
-    if(layer.Layer) {
-      const foundLayer = recursivelyFindLayer(layer.Layer, name)
-      if(foundLayer) { 
-        return foundLayer
-      }
-    }
-  }
-
-  return null
-}
-
 export async function fetchLayerXML({ id }) {
   const { viewerLayer: {
     layer,
@@ -137,23 +115,11 @@ export async function fetchLayerXML({ id }) {
     }
   }
 
-  const getCapabilitiesUrl = `${data.layer.url}?service=WMS&request=GetCapabilities`
-
   const httpsAgent = new https.Agent({
     rejectUnauthorized: false,
   })
 
-  const capabilitiesXml = await fetch(getCapabilitiesUrl, {
-    agent: httpsAgent,
-  }).then((res) => res.text())
-
-  const capabilities = JSON.parse(
-    convert.xml2json(capabilitiesXml, {
-      compact: true,
-    })
-  )
-
-  const layerInfo = recursivelyFindLayer(capabilities.WMS_Capabilities.Capability.Layer, data.layer.layer)
+  const layerInfo = await fetchLayerInfo(data.layer.url, data.layer.layer, httpsAgent)
 
   let formatted = null
 

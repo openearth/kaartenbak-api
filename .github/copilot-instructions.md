@@ -80,3 +80,129 @@ The project uses `"type": "module"` (ESM). Use `import`/`export` throughout; no 
 
 ### Environment variables
 See `.env.example` for required variables. Scripts that target specific DatoCMS instances use per-instance tokens (`DATO_API_KEY_<INSTANCE>`). Set `SKIP_GEONETWORK_PUBLISH = true` inside a script to do a dry run without publishing.
+
+
+# Response and Markdown Formatting
+
+When completing tasks, investigations, debugging, code reviews, or answering technical questions, present the final response as a clear, structured technical report.
+
+## General formatting
+
+- Use Markdown headings to organize the response.
+- Start with a concise **Summary** or **Conclusion** whenever appropriate.
+- Prefer structured information over long blocks of prose.
+- Use bullet points and numbered lists where they improve readability.
+- Use Markdown tables when comparing multiple items or presenting structured information.
+- Use fenced code blocks with the appropriate language for code snippets.
+- Keep code snippets focused and relevant; do not dump entire files unless explicitly requested.
+- Use bold text to highlight important findings, decisions, warnings, or conclusions.
+- Reference relevant files using their paths and, where useful, line numbers.
+- Do not dump large amounts of raw command output. Summarize the important results instead.
+
+## Investigations and research
+
+When investigating the codebase, behave like a senior engineer preparing a concise investigation report.
+
+Prefer this structure when appropriate:
+
+### Summary
+
+State the main conclusion clearly and directly.
+
+### Findings
+
+Present the important findings using bullets or a table.
+
+| Area | Finding | Evidence / Details |
+|---|---|---|
+| ... | ... | ... |
+
+### Relevant Code
+
+Show small, relevant code snippets with syntax highlighting.
+
+```python
+# relevant example
+```
+
+### Files
+
+List the most relevant files and explain their relevance.
+
+- `path/to/file.py` — description
+- `path/to/component.ts` — description
+
+### Recommendations
+
+Provide concrete recommendations, preferably in priority order.
+
+1. ...
+2. ...
+3. ...
+
+### Next Steps
+
+List practical next steps when applicable.
+
+- ...
+- ...
+
+## Debugging
+
+For debugging tasks:
+
+1. State the likely root cause first.
+2. Explain the evidence supporting it.
+3. Distinguish confirmed facts from assumptions.
+4. Show the relevant code or configuration.
+5. Explain the proposed fix.
+6. Mention possible side effects or risks.
+7. End with verification steps.
+
+Use a table when there are multiple possible causes:
+
+| Possible Cause | Likelihood | Evidence | How to Verify |
+|---|---:|---|---|
+| ... | High | ... | ... |
+| ... | Medium | ... | ... |
+
+## Code changes
+
+When making changes:
+
+### Summary
+
+Briefly describe what was changed.
+
+### Changes
+
+| File | Change | Reason |
+|---|---|---|
+| `...` | ... | ... |
+
+### Important Details
+
+Explain non-obvious implementation decisions.
+
+### Verification
+
+State what was tested, including relevant commands and their results.
+
+```bash
+pytest ...
+npm run build
+```
+
+Clearly distinguish between tests that were actually run and tests that were not run.
+
+## Architecture questions
+
+When explaining architecture:
+
+- Start with a high-level overview.
+- Use diagrams or structured text when useful.
+- Identify the main components and their responsibilities.
+- Explain data flow and dependencies.
+- Distinguish client-side and server-side responsibilities.
+- Use tables for component comparisons.
+- Reference the

@@ -98,6 +98,7 @@ query LayerById($id: ItemId) {
     }
     layer {
       name
+      description
       url
       layer
       indexableWfsProperties

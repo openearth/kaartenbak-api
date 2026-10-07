@@ -2,6 +2,32 @@ import { dateTypes } from './constants'
 import { formatKeywords } from './format-keywords'
 import { formatSpatialRepresentationType } from './format-spatial-representation-type'
 import { formatLinks } from './format-links'
+import { JSDOM } from 'jsdom'
+
+function formatAbstract(layer) {
+  const fragment = JSDOM.fragment(layer.description || '')
+  fragment.querySelectorAll('script, style').forEach((element) => element.remove())
+  fragment.querySelectorAll('br').forEach((element) => element.replaceWith('\n'))
+  fragment.querySelectorAll('p, div, section, article, h1, h2, h3, h4, h5, h6, ul, ol, blockquote, pre')
+    .forEach((element) => {
+      element.prepend('\n\n')
+      element.append('\n\n')
+    })
+  fragment.querySelectorAll('li, tr').forEach((element) => {
+    element.append('\n')
+  })
+  fragment.querySelectorAll('td, th').forEach((element) => element.append(' '))
+
+  const description = fragment.textContent
+    .replace(/\r\n?/g, '\n')
+    .replace(/[^\S\n]+/g, ' ')
+    .replace(/ *\n */g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+  const abstract = `${layer.inspireMetadata.abstract}${description ? `\n\n${description}` : ''}`
+
+  return abstract.replace(/]]>/g, ']]]]><![CDATA[>')
+}
 
 export const format = ({ id, layerInfo, layer }) => /* xml */ `
 <gmd:MD_Metadata xmlns:gmd="http://www.isotc211.org/2005/gmd" xmlns:gco="http://www.isotc211.org/2005/gco" xmlns:gmx="http://www.isotc211.org/2005/gmx" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml/3.2" xmlns:xlink="http://www.w3.org/1999/xlink" xsi:schemaLocation="http://www.isotc211.org/2005/gmd http://schemas.opengis.net/csw/2.0.2/profiles/apiso/1.0.0/apiso.xsd">
@@ -130,7 +156,7 @@ export const format = ({ id, layerInfo, layer }) => /* xml */ `
       <gmd:abstract>
         <gco:CharacterString>
           <![CDATA[
-          ${layer.inspireMetadata.abstract}${layer.description?.trim() ? `\n\n${layer.description.trim()}` : ''}
+          ${formatAbstract(layer)}
           ]]></gco:CharacterString>
       </gmd:abstract>
 

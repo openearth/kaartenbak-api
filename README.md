@@ -116,7 +116,7 @@ Responses:
 - `404` — missing `id`/`format` query parameter, or no metadata (`factsheets`/`inspireMetadata`/external URL) exists for this viewer-layer (`{ "error": "No metadata found for this layer" }`).
 - `400` — `format` is not `xml`/`json`.
 
-For both `/api/layer` and `/api/viewer-layer`, INSPIRE-derived XML combines the linked INSPIRE dataset's abstract with the CMS layer's description, separated by a blank line. Missing or blank layer descriptions are omitted. WMS capabilities are still fetched for CRS, geographic bounding box, and spatial representation information, but their abstract is not used. Factsheet-derived abstracts are unchanged.
+For both `/api/layer` and `/api/viewer-layer`, INSPIRE-derived XML combines the linked INSPIRE dataset's abstract with the CMS layer's description, separated by a blank line. The description is converted from HTML to plain text, preserving paragraph and line breaks and decoding HTML entities; the CMS record is not changed. Missing or blank layer descriptions are omitted. WMS capabilities are still fetched for CRS, geographic bounding box, and spatial representation information, but their abstract is not used. Factsheet-derived abstracts are unchanged.
 
 #### `GET /api/search`
 

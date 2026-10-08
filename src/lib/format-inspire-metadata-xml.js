@@ -4,8 +4,8 @@ import { formatSpatialRepresentationType } from './format-spatial-representation
 import { formatLinks } from './format-links'
 import { JSDOM } from 'jsdom'
 
-function formatAbstract(layer) {
-  const fragment = JSDOM.fragment(layer.description || '')
+function htmlToPlainText(html) {
+  const fragment = JSDOM.fragment(html || '')
   fragment.querySelectorAll('script, style').forEach((element) => element.remove())
   fragment.querySelectorAll('br').forEach((element) => element.replaceWith('\n'))
   fragment.querySelectorAll('p, div, section, article, h1, h2, h3, h4, h5, h6, ul, ol, blockquote, pre')
@@ -18,13 +18,19 @@ function formatAbstract(layer) {
   })
   fragment.querySelectorAll('td, th').forEach((element) => element.append(' '))
 
-  const description = fragment.textContent
+  return fragment.textContent
     .replace(/\r\n?/g, '\n')
     .replace(/[^\S\n]+/g, ' ')
     .replace(/ *\n */g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim()
-  const abstract = `${layer.inspireMetadata.abstract}${description ? `\n\n${description}` : ''}`
+}
+
+function formatAbstract(layer) {
+  const abstract = [
+    htmlToPlainText(layer.inspireMetadata.abstract),
+    htmlToPlainText(layer.description),
+  ].filter(Boolean).join('\n\n')
 
   return abstract.replace(/]]>/g, ']]]]><![CDATA[>')
 }

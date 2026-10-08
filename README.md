@@ -45,6 +45,93 @@ npm run sync-external-metadata
 npm run report
 ```
 
+## Test sync locally without GeoNetwork
+
+The repository skill `test-local-sync` guides Copilot through this workflow.
+After adding it to an existing CLI session, run `/skills reload`. For example,
+ask: "Use the /test-local-sync skill to test my abstract changes with the
+Depth decomposed peat layer." The npm commands below also work without Copilot.
+
+The simulator runs the real `sync-viewer-layer-background` handler, XML formatters,
+capabilities parser, and thumbnail flow. DatoCMS and HTTP responses are captured
+once; GeoNetwork and Mailjet are replaced with local test doubles. It never
+publishes records, deletes real records, or sends real emails. No local Netlify
+server or GeoNetwork installation is required.
+
+List **all published viewer-layer records** using `DATO_API_TOKEN` from `.env`:
+
+```text
+npm run sync:local -- list
+npm run sync:local -- list --viewer viewer
+```
+
+The table shows layer names, viewer names, metadata types, underlying layer IDs,
+and **viewerLayerId** values. Use a viewer-layer ID for capture and replay, not
+the underlying layer ID. Viewer names are the CMS menu names; the NL2120 viewer
+in the currently configured CMS is named `viewer`.
+
+Capture any selected record, for example Depth decomposed peat:
+
+```text
+npm run sync:local -- capture --id KuX79AU0RC-gZ-ahq0xWCA
+```
+
+Capture performs read-only GraphQL queries and GET requests for capabilities,
+external metadata, and thumbnails. It uses published CMS data, not draft data.
+GeoNetwork credentials and notification recipients are not fetched; dummy values
+are substituted. Resource redirects fail explicitly rather than following an
+unexpected destination.
+
+The fixture is saved to `.sync-local\fixtures\<viewer-layer-id>.json`.
+Existing fixtures are not overwritten: rename the specific fixture if you want
+to capture a fresh baseline. Captured data and generated output are ignored by Git.
+
+After changing application code, replay without any network access or credentials:
+
+```text
+npm run test:sync -- --id KuX79AU0RC-gZ-ahq0xWCA
+npm run test:sync -- --id KuX79AU0RC-gZ-ahq0xWCA --event publish
+npm run test:sync -- --all
+npm run sync:local -- list --offline
+```
+
+The default event is `update`; `create` and `publish` are also supported. The
+fixture's `scenario.viewerRecordExists` and `scenario.layerRecordExists` values
+control simulated record existence and legacy-record migration.
+
+Inspect `.sync-local\output\<viewer-layer-id>\record-1.xml` and `operations.json`.
+Multiple destinations produce additional numbered XML files. Operations include
+the webhook payload, handler logs, intended uploads, thumbnail operations, legacy
+deletions, and intercepted error notifications. Output is saved even if checks
+fail; consult `operations.json` for uploads from the current run.
+
+Checks require an actual XML upload, valid XML, the correct record ID and
+create/overwrite request, no sync errors or notifications, and an exact match
+against the fixture's expected abstract and spatial fields. HTTP `202` by itself
+does not mean the test passed.
+
+The initial expected result is captured from the current code: **inspect the
+baseline XML before accepting it**. To simulate a CMS edit, change
+`cms[].data.viewerLayer.layer.description` in the metadata response and update
+`expected.abstract` to the independently expected plain text. Do not update the
+expectation merely to make a failing test pass. New CMS query shapes or resource
+URLs require a new capture rather than silently making live requests during replay.
+Records without metadata or a GeoNetwork association fail explicitly.
+
+Run the committed offline regression tests before pushing:
+
+```text
+npm test
+```
+
+These cover HTML conversion, blank descriptions, CDATA terminators,
+create/update/publish, preserved capabilities values, thumbnail operations,
+legacy migration, and failure detection. The harness uses Node's experimental VM
+modules (the command supplies the flag), so Node prints an experimental warning.
+It is a controlled test runner, not a security sandbox for untrusted code. It does
+not validate GeoNetwork's schema acceptance or catalogue rendering; those require
+a staging GeoNetwork instance.
+
 ## API Endpoints
 
 | Path | Method | Description |

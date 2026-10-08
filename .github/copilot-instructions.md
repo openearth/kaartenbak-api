@@ -40,7 +40,12 @@ npm run sync-external-metadata   # sync external metadata to GeoNetwork
 npm run report                   # report dead WMS layer links via email
 ```
 
-No test suite exists in this repository.
+Offline sync regression tests run with `npm test`. Use `npm run sync:local -- list`
+to list published CMS viewer-layer IDs, `npm run sync:local -- capture --id <id>`
+to capture read-only inputs, and `npm run test:sync -- --id <id>` to replay the
+real webhook handler offline. GeoNetwork and Mailjet are test doubles; local
+fixtures and XML output are stored in the Git-ignored `.sync-local` directory.
+See the README for the full workflow. Never use production sync webhooks as tests.
 
 ## Key Conventions
 

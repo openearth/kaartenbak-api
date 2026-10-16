@@ -254,7 +254,7 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
       const action = viewerLayerExists ? 'updated' : layerExists ? 'migrated from layerId' : 'created'
       console.log('[LOG] Record existence check', { viewerLayerId, viewerLayerExists, layerId, layerExists, action })
 
-      await syncRecordToGeoNetwork(geonetwork, eventType, xml, baseUrl, metadataType, geonetworkUrl)
+      await syncRecordToGeoNetwork(geonetwork, eventType, xml, baseUrl, metadataType, geonetworkUrl, viewerLayerId)
 
       // Remove legacy layerId record to prevent duplicates
       if (layerExists) {
@@ -307,30 +307,60 @@ function findEmailContactsForId(menuTree, id) {
   return contacts
 }
 
-async function syncRecordToGeoNetwork(geonetwork, eventType, xml, baseUrl, metadataType, geonetworkUrl) {
+async function syncRecordToGeoNetwork(geonetwork, eventType, xml, baseUrl, metadataType, geonetworkUrl, viewerLayerId) {
   switch (eventType) {
     case 'create': {
-      await geonetwork.recordsRequest({
+      const report = await geonetwork.recordsRequest({
         url: '?publishToAll=true',
         method: 'PUT',
         headers: { 'Content-Type': 'application/xml' },
         body: xml,
       })
       console.log('[LOG] Record created in GeoNetwork', { baseUrl, geonetworkUrl, metadataType })
+      logGeonetworkUploadReport(report, { viewerLayerId, baseUrl, metadataType, eventType })
       break
     }
 
     case 'update':
     case 'publish': {
-      await geonetwork.recordsRequest({
+      const report = await geonetwork.recordsRequest({
         url: '?uuidProcessing=OVERWRITE&publishToAll=true',
         method: 'PUT',
         headers: { 'Content-Type': 'application/xml' },
         body: xml,
       })
       console.log('[LOG] Record updated in GeoNetwork', { baseUrl, geonetworkUrl, metadataType })
+      logGeonetworkUploadReport(report, { viewerLayerId, baseUrl, metadataType, eventType })
       break
     }
+  }
+}
+
+// GeoNetwork can answer HTTP 200 while its processing report says the record was not stored.
+function logGeonetworkUploadReport(report, context) {
+  const processed = report?.numberOfRecordsProcessed
+  const withErrors = report?.numberOfRecordsWithErrors
+  const errors = Array.isArray(report?.errors) ? report.errors : []
+  const records = Object.entries(report?.metadataInfos || {}).flatMap(([internalId, infos]) =>
+    (Array.isArray(infos) ? infos : [infos]).map((info) => ({ internalId, uuid: info?.uuid, message: info?.message }))
+  )
+  const summary = {
+    ...context,
+    processed,
+    withErrors,
+    records,
+    errors: errors.map((error) => error?.message || JSON.stringify(error)),
+  }
+
+  if (typeof processed !== 'number') {
+    console.warn('[LOG] GeoNetwork upload result unknown (no processing report)', {
+      ...context,
+      response: JSON.stringify(report)?.slice(0, 1000),
+    })
+  } else if (processed > 0 && !withErrors && !errors.length) {
+    console.log('[LOG] GeoNetwork upload SUCCEEDED', summary)
+  } else {
+    console.error('[LOG] GeoNetwork upload FAILED', summary)
   }
 }
 

@@ -2,23 +2,40 @@ import { dateTypes } from './constants'
 import { formatKeywords } from './format-keywords'
 import { formatSpatialRepresentationType } from './format-spatial-representation-type'
 import { formatLinks } from './format-links'
-import { JSDOM } from 'jsdom'
+
+// jsdom cannot be bundled into the Netlify function (optional "canvas" dependency),
+// so the HTML is converted to plain text with string operations only.
+const namedEntities = {
+  amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: '\u00a0',
+  euro: '€', copy: '©', reg: '®', deg: '°', plusmn: '±', micro: 'µ', middot: '·',
+  sup2: '²', sup3: '³', frac12: '½', times: '×', ndash: '–', mdash: '—',
+  lsquo: '‘', rsquo: '’', ldquo: '“', rdquo: '”', hellip: '…', bull: '•',
+  agrave: 'à', aacute: 'á', acirc: 'â', auml: 'ä', aring: 'å', ccedil: 'ç',
+  egrave: 'è', eacute: 'é', ecirc: 'ê', euml: 'ë', igrave: 'ì', iacute: 'í',
+  icirc: 'î', iuml: 'ï', ntilde: 'ñ', ograve: 'ò', oacute: 'ó', ocirc: 'ô',
+  ouml: 'ö', ugrave: 'ù', uacute: 'ú', ucirc: 'û', uuml: 'ü',
+  Eacute: 'É', Euml: 'Ë', Iuml: 'Ï', Ouml: 'Ö', Uuml: 'Ü', Auml: 'Ä',
+}
+
+function decodeEntities(text) {
+  return text.replace(/&(?:#(\d+)|#[xX]([0-9a-fA-F]+)|([a-zA-Z][a-zA-Z0-9]*));/g, (match, decimal, hex, name) => {
+    if (name) return namedEntities[name] ?? match
+    const codePoint = decimal ? parseInt(decimal, 10) : parseInt(hex, 16)
+    return codePoint > 0 && codePoint <= 0x10ffff ? String.fromCodePoint(codePoint) : match
+  })
+}
 
 function htmlToPlainText(html) {
-  const fragment = JSDOM.fragment(html || '')
-  fragment.querySelectorAll('script, style').forEach((element) => element.remove())
-  fragment.querySelectorAll('br').forEach((element) => element.replaceWith('\n'))
-  fragment.querySelectorAll('p, div, section, article, h1, h2, h3, h4, h5, h6, ul, ol, blockquote, pre')
-    .forEach((element) => {
-      element.prepend('\n\n')
-      element.append('\n\n')
-    })
-  fragment.querySelectorAll('li, tr').forEach((element) => {
-    element.append('\n')
-  })
-  fragment.querySelectorAll('td, th').forEach((element) => element.append(' '))
+  const text = String(html || '')
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<(script|style)\b[\s\S]*?<\/\1\s*>/gi, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/?(?:p|div|section|article|h[1-6]|ul|ol|blockquote|pre)\b(?:"[^"]*"|'[^']*'|[^>"'])*>/gi, '\n\n')
+    .replace(/<\/(?:li|tr)\s*>/gi, '\n')
+    .replace(/<\/(?:td|th)\s*>/gi, ' ')
+    .replace(/<\/?[a-zA-Z](?:"[^"]*"|'[^']*'|[^>"'])*>/g, '')
 
-  return fragment.textContent
+  return decodeEntities(text)
     .replace(/\r\n?/g, '\n')
     .replace(/[^\S\n]+/g, ' ')
     .replace(/ *\n */g, '\n')

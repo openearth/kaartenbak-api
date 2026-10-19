@@ -172,5 +172,5 @@ export async function fetchViewerLayerXML({ id }) {
     metadataType = 'external'
   }
 
-  return formatted ? { xml: formatted, metadataType } : null
+  return formatted ? { xml: formatted, metadataType, layerTitle: data.layer.name } : null
 }

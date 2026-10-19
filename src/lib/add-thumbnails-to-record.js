@@ -1,7 +1,7 @@
 import FormData from 'form-data'
 import fetch from 'node-fetch'
 
-export async function addThumbnailsToRecord(thumbnails, recordId, geonetwork) {
+export async function addThumbnailsToRecord(thumbnails, recordId, geonetwork, { logSuccess = true } = {}) {
   if (!thumbnails || thumbnails.length === 0) {
     return
   }
@@ -89,7 +89,9 @@ export async function addThumbnailsToRecord(thumbnails, recordId, geonetwork) {
     } catch (error) {
       // If resource already exists, that's okay - it means the thumbnail is already there
       if (error.code === 'resource_already_exist' || error.message?.includes('Resource already exists')) {
-        console.log('[THUMBNAIL] Attachment already exists, skipping:', recordId)
+        if (logSuccess) {
+          console.log('[THUMBNAIL] Attachment already exists, skipping:', recordId)
+        }
         continue
       }
       // Re-throw other errors

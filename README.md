@@ -309,13 +309,33 @@ Triggered when a **Layer** is created or published in Dato CMS. The handler rece
 
 ### Viewer layer sync (`sync-viewer-layer-background`)
 
-Triggered when a **Viewer layer**, **Menu (viewer)**, or **Inspire Dataset** is created, updated, or published in Dato CMS. It inspects `related_entities` to get the item type.
+Triggered when a **Viewer layer**, **Menu (viewer)**, **Layer**, or **Inspire Dataset** is created, updated, or published in Dato CMS. It inspects `related_entities` to get the item type.
 
 - **Viewer layer** (`viewer_layer`): finds GeoNetwork instances for that viewer layer, fetches the viewer-layer XML (external metadata or generated), then creates or updates the record and thumbnails in each GeoNetwork (create/update/publish).
 - **Menu (viewer)** (`menu`): finds all viewer layers under that viewer and runs the same viewer-layer sync for each.
 - **Inspire Dataset** (`inspire_dataset`): finds all viewer layers whose `inspireMetadata` references the changed dataset and runs the same viewer-layer sync for each. The DatoCMS webhook must include `inspire_dataset` in its item-type filter.
+- **Layer** (`layer`): finds all viewer layers that reference the changed layer and runs the same sync for each. Viewer-layers without a GeoNetwork destination are skipped.
 
 On failure, it sends error emails to the viewer’s `errorNotificationContacts`. The endpoint always returns `202`; errors are logged and emailed, not returned as 5xx.
+
+#### Sync logging
+
+`sync-viewer-layer-background` writes errors and one `[LOG] Sync finished` summary
+for each accepted webhook call. The summary includes the request ID, changed
+record ID, model, event, total duration and outcomes for each viewer-layer and
+GeoNetwork destination, including the layer title when metadata was generated.
+This is the CMS layer name, not necessarily the title of factsheet or external
+metadata. Skipped viewer-layers include a reason. Failed outcomes
+include the failed step and error; XML and thumbnail results are recorded
+separately, so a thumbnail failure does not hide an earlier successful XML upload.
+
+`completed` means the work finished; check skipped outcomes to see whether anything
+was uploaded. `unconfirmed` means GeoNetwork returned no processing report, so
+the upload cannot be confirmed. A processing report that rejects metadata is
+treated as a sync failure, even with HTTP 200. Error notifications remain enabled.
+Thumbnail cleanup warnings and runtime warnings may still appear. Summaries are
+not persistent storage, and cannot be emitted if the process is killed or a request
+never finishes. This does not change logging for `sync-layer-background`.
 
 ## External metadata synchronization
 

@@ -88,13 +88,8 @@ function getHeader(event, name) {
 
 export const handler = withServerDefaults(async (event, _) => {
   const reqId = getRequestId(event)
-
-  console.log('[LOG] Invoked', {
-    reqId,
-    path: event.path,
-    method: event.httpMethod,
-    environment: getHeader(event, 'x-environment'),
-  })
+  const startedAt = Date.now()
+  const outcomes = []
 
   const incomingKey = getHeader(event, 'x-api-key')
   if (process.env.SYNC_LAYER_API_TOKEN !== incomingKey) {
@@ -112,11 +107,23 @@ export const handler = withServerDefaults(async (event, _) => {
 
   const id = data?.entity?.id
   const eventType = data?.event_type
-  console.log('[LOG] Starting', { reqId, id, eventType })
+  let status = 'completed'
+  let type
 
   let menuTree = null
   const notificationIds = new Set(id ? [id] : [])
   try {
+    const itemTypeEntity = data?.related_entities?.find((entity) => entity?.type === 'item_type')
+    type = itemTypeEntity?.attributes?.api_key
+    if (!type) {
+      throw new Error('No item_type.api_key found in related_entities')
+    }
+    if (!['create', 'update', 'publish'].includes(eventType)) {
+      status = 'ignored'
+      outcomes.push({ status: 'skipped', reason: 'Unsupported sync event' })
+      return { statusCode: 202 }
+    }
+
     const { menus } = await datocmsRequest({
       query: viewersWithViewerLayersQuery,
     })
@@ -124,19 +131,10 @@ export const handler = withServerDefaults(async (event, _) => {
     const formattedMenus = formatMenusRecursive(menus)
     menuTree = buildMenuTree(formattedMenus)
 
-    const itemTypeEntity = data?.related_entities?.find((entity) => entity?.type === 'item_type')
-    const type = itemTypeEntity?.attributes?.api_key
-
-    console.log('[LOG] Webhook type resolved', { reqId, type })
-
-    if (!type) {
-      throw new Error('No item_type.api_key found in related_entities')
-    }
-
     if (type === 'viewer_layer') {
-      await syncViewerLayers(menuTree, eventType, id)
+      await syncViewerLayers(menuTree, eventType, id, outcomes)
     } else if (type === 'menu') {
-      await syncViewer(menuTree, eventType, id)
+      await syncViewer(menuTree, eventType, id, outcomes)
     } else if (type === 'inspire_dataset') {
       await syncLinkedViewerLayers(
         menuTree,
@@ -144,7 +142,8 @@ export const handler = withServerDefaults(async (event, _) => {
         id,
         viewerLayersByInspireDatasetIdQuery,
         'INSPIRE dataset',
-        notificationIds
+        notificationIds,
+        outcomes
       )
     } else if (type === 'layer') {
       await syncLinkedViewerLayers(
@@ -153,12 +152,14 @@ export const handler = withServerDefaults(async (event, _) => {
         id,
         viewerLayersByLayerIdQuery,
         'layer',
-        notificationIds
+        notificationIds,
+        outcomes
       )
     } else {
-      console.log('[LOG] Ignored webhook type', { reqId, type })
+      status = 'ignored'
     }
   } catch (e) {
+    status = 'failed'
     console.error('[LOG] Error', { reqId, id, eventType, err: e.message })
 
     if (menuTree && id) {
@@ -168,7 +169,6 @@ export const handler = withServerDefaults(async (event, _) => {
         )
       )
       for (const email of emailContacts) {
-        console.log('[LOG] Sending email to', { reqId, email })
         try {
           await mailjet.post('send', { version: 'v3.1' }).request({
             Messages: [
@@ -185,12 +185,21 @@ export const handler = withServerDefaults(async (event, _) => {
         }
       }
     }
+  } finally {
+    if (status === 'completed' && outcomes.some((outcome) => outcome.xml === 'unknown (no processing report)')) {
+      status = 'unconfirmed'
+    }
+    console.log('[LOG] Sync finished', {
+      reqId, id, type, eventType, status,
+      durationMs: Date.now() - startedAt,
+      outcomes,
+    })
   }
 
   return { statusCode: 202 }
 })
 
-async function syncViewer(menuTree, eventType, viewerId) {
+async function syncViewer(menuTree, eventType, viewerId, outcomes) {
   const viewerLayers = new Set()
 
   const findChildrenInMenu = (menu, targetViewerId) => {
@@ -213,14 +222,18 @@ async function syncViewer(menuTree, eventType, viewerId) {
   })
 
   const viewerLayersArray = Array.from(viewerLayers)
+  if (viewerLayersArray.length === 0) {
+    outcomes.push({ status: 'skipped', reason: 'No viewer layers found in menu' })
+  }
   const requestsPromises = viewerLayersArray.map((viewerLayerId) =>
-    syncViewerLayers(menuTree, eventType, viewerLayerId)
+    syncViewerLayers(menuTree, eventType, viewerLayerId, outcomes)
   )
 
-  await Promise.allSettled(requestsPromises)
+  const results = await Promise.allSettled(requestsPromises)
+  throwSyncErrors(results)
 }
 
-async function syncLinkedViewerLayers(menuTree, eventType, itemId, query, itemType, notificationIds) {
+async function syncLinkedViewerLayers(menuTree, eventType, itemId, query, itemType, notificationIds, outcomes) {
   const { viewerLayers } = await datocmsRequest({
     query,
     variables: { id: itemId },
@@ -229,53 +242,58 @@ async function syncLinkedViewerLayers(menuTree, eventType, itemId, query, itemTy
   const viewerLayerIds = viewerLayers.map(({ id: viewerLayerId }) => viewerLayerId)
   viewerLayerIds.forEach((viewerLayerId) => notificationIds.add(viewerLayerId))
 
-  console.log(`[LOG] Found viewer layers for ${itemType}`, {
-    itemId,
-    count: viewerLayers.length,
-  })
-
   if (viewerLayers.length === 0) {
-    console.log(`[LOG] No viewer layers linked to ${itemType}`, { itemId })
+    outcomes.push({ status: 'skipped', reason: `No viewer layers linked to ${itemType}` })
     return
   }
 
   const results = await Promise.allSettled(
     viewerLayerIds.map((viewerLayerId) =>
-      syncViewerLayers(menuTree, eventType, viewerLayerId)
+      syncViewerLayers(menuTree, eventType, viewerLayerId, outcomes)
     )
   )
-  const errors = results.filter((result) => result.status === 'rejected')
+  throwSyncErrors(results)
+}
 
+function throwSyncErrors(results) {
+  const errors = results.filter((result) => result.status === 'rejected')
   if (errors.length) {
     const errorMessage = `<ul>${errors.map((error) => `<li>${error.reason}</li>`).join('')}</ul>`
     throw new Error(errorMessage)
   }
 }
 
-async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
-  console.log('[LOG] Found viewer layer', { viewerLayerId, eventType })
-  
+async function syncViewerLayers(menuTree, eventType, viewerLayerId, outcomes) {
+  const initialOutcomeCount = outcomes.length
+  try {
+    await syncViewerLayerDestinations(menuTree, eventType, viewerLayerId, outcomes)
+  } catch (error) {
+    if (!outcomes.slice(initialOutcomeCount).some((outcome) =>
+      outcome.viewerLayerId === viewerLayerId && outcome.status === 'failed')) {
+      outcomes.push({ viewerLayerId, status: 'failed', step: 'prepare metadata', error: error.message })
+    }
+    throw error
+  }
+}
+
+async function syncViewerLayerDestinations(menuTree, eventType, viewerLayerId, outcomes) {
   const geonetworkInstances = findGeonetworkInstances(menuTree, viewerLayerId)
   const geonetworkInstancesArray = Array.from(geonetworkInstances)
 
   if (geonetworkInstancesArray.length === 0) {
-    console.warn('[LOG] No GeoNetwork instances found', { viewerLayerId })
+    outcomes.push({ viewerLayerId, status: 'skipped', reason: 'No GeoNetwork instances found' })
     return
   }
-
-  console.log('[LOG] Found GeoNetwork instances', { viewerLayerId, count: geonetworkInstancesArray.length })
 
   const result = await fetchViewerLayerXML({ id: viewerLayerId })
 
   if (result === null) {
-    console.log('[LOG] No XML returned; skipping', { viewerLayerId })
+    outcomes.push({ viewerLayerId, status: 'skipped', reason: 'No metadata XML available' })
     return
   }
 
-  const { xml, metadataType } = result
+  const { xml, metadataType, layerTitle } = result
   
-  console.log('[LOG] Fetched XML for viewer layer', { viewerLayerId, metadataType })
-
   // Fetch layerId once (shared across all GeoNetwork instances for this viewer layer)
   const { viewerLayer } = await datocmsRequest({
     query: viewerLayerByIdQuery,
@@ -288,40 +306,39 @@ async function syncViewerLayers(menuTree, eventType, viewerLayerId) {
     const geonetworkUrl = `${baseUrl}geonetwork/srv/api`
     const geonetwork = new Geonetwork(geonetworkUrl, username, password)
 
-    console.log('[LOG] Starting sync to GeoNetwork instance', { viewerLayerId, baseUrl, geonetworkUrl, metadataType, eventType })
-
+    const outcome = { viewerLayerId, layerTitle, baseUrl, metadataType, xml: 'not uploaded', thumbnails: 'not synced' }
+    let step = 'check existing records'
     try {
       const viewerLayerExists = await geonetwork.recordExists(viewerLayerId)
       const layerExists = layerId ? await geonetwork.recordExists(layerId) : false
 
       const action = viewerLayerExists ? 'updated' : layerExists ? 'migrated from layerId' : 'created'
-      console.log('[LOG] Record existence check', { viewerLayerId, viewerLayerExists, layerId, layerExists, action })
-
-      await syncRecordToGeoNetwork(geonetwork, eventType, xml, baseUrl, metadataType, geonetworkUrl, viewerLayerId)
+      step = 'upload XML'
+      outcome.xml = await syncRecordToGeoNetwork(geonetwork, eventType, xml)
 
       // Remove legacy layerId record to prevent duplicates
       if (layerExists) {
-        console.log('[LOG] Deleting legacy layerId record', { layerId, baseUrl })
+        step = 'delete legacy record'
         await geonetwork.deleteRecord(layerId)
       }
 
-      await syncThumbnails(geonetwork, eventType, viewerLayerId, baseUrl, metadataType, geonetworkUrl)
-      console.log('[LOG] Completed sync to GeoNetwork instance', { viewerLayerId, baseUrl, geonetworkUrl, metadataType, action })
+      step = 'sync thumbnails'
+      await syncThumbnails(geonetwork, eventType, viewerLayerId)
+      outcome.thumbnails = 'synced'
+      outcome.status = outcome.xml === 'uploaded' ? 'completed' : 'unconfirmed'
+      outcome.action = action
     } catch (error) {
-      console.error('[LOG] GeoNetwork error', { viewerLayerId, baseUrl, geonetworkUrl, metadataType, err: error.message })
+      outcome.status = 'failed'
+      outcome.step = step
+      outcome.error = error.message
       throw error
+    } finally {
+      outcomes.push(outcome)
     }
   })
 
   const results = await Promise.allSettled(requestsPromises)
-  const errors = results.filter((result) => result.status === 'rejected')
-
-  if (errors.length) {
-    const errorMessage = `<ul>${errors.map((error) => `<li>${error.reason}</li>`).join('')}</ul>`
-    throw new Error(errorMessage)
-  }
-
-  console.log('[LOG] Successfully published XML to all GeoNetwork instances', { viewerLayerId, metadataType, instanceCount: geonetworkInstancesArray.length })
+  throwSyncErrors(results)
 }
 
 function findEmailContactsForId(menuTree, id) {
@@ -350,7 +367,7 @@ function findEmailContactsForId(menuTree, id) {
   return contacts
 }
 
-async function syncRecordToGeoNetwork(geonetwork, eventType, xml, baseUrl, metadataType, geonetworkUrl, viewerLayerId) {
+async function syncRecordToGeoNetwork(geonetwork, eventType, xml) {
   switch (eventType) {
     case 'create': {
       const report = await geonetwork.recordsRequest({
@@ -359,9 +376,7 @@ async function syncRecordToGeoNetwork(geonetwork, eventType, xml, baseUrl, metad
         headers: { 'Content-Type': 'application/xml' },
         body: xml,
       })
-      console.log('[LOG] Record created in GeoNetwork', { baseUrl, geonetworkUrl, metadataType })
-      logGeonetworkUploadReport(report, { viewerLayerId, baseUrl, metadataType, eventType })
-      break
+      return checkGeonetworkUploadReport(report)
     }
 
     case 'update':
@@ -372,54 +387,36 @@ async function syncRecordToGeoNetwork(geonetwork, eventType, xml, baseUrl, metad
         headers: { 'Content-Type': 'application/xml' },
         body: xml,
       })
-      console.log('[LOG] Record updated in GeoNetwork', { baseUrl, geonetworkUrl, metadataType })
-      logGeonetworkUploadReport(report, { viewerLayerId, baseUrl, metadataType, eventType })
-      break
+      return checkGeonetworkUploadReport(report)
     }
   }
 }
 
 // GeoNetwork can answer HTTP 200 while its processing report says the record was not stored.
-function logGeonetworkUploadReport(report, context) {
+function checkGeonetworkUploadReport(report) {
   const processed = report?.numberOfRecordsProcessed
   const withErrors = report?.numberOfRecordsWithErrors
   const errors = Array.isArray(report?.errors) ? report.errors : []
-  const records = Object.entries(report?.metadataInfos || {}).flatMap(([internalId, infos]) =>
-    (Array.isArray(infos) ? infos : [infos]).map((info) => ({ internalId, uuid: info?.uuid, message: info?.message }))
-  )
-  const summary = {
-    ...context,
-    processed,
-    withErrors,
-    records,
-    errors: errors.map((error) => error?.message || JSON.stringify(error)),
-  }
-
   if (typeof processed !== 'number') {
-    console.warn('[LOG] GeoNetwork upload result unknown (no processing report)', {
-      ...context,
-      response: JSON.stringify(report)?.slice(0, 1000),
-    })
+    return 'unknown (no processing report)'
   } else if (processed > 0 && !withErrors && !errors.length) {
-    console.log('[LOG] GeoNetwork upload SUCCEEDED', summary)
+    return 'uploaded'
   } else {
-    console.error('[LOG] GeoNetwork upload FAILED', summary)
+    throw new Error(`GeoNetwork upload failed: ${JSON.stringify({
+      processed, withErrors, errors: errors.map((error) => error?.message || JSON.stringify(error)),
+    })}`)
   }
 }
 
-async function syncThumbnails(geonetwork, eventType, viewerLayerId, baseUrl, metadataType, geonetworkUrl) {
+async function syncThumbnails(geonetwork, eventType, viewerLayerId) {
   if (eventType !== 'create' && eventType !== 'update' && eventType !== 'publish') {
     return
   }
-
-  console.log('[LOG] Syncing thumbnails', { viewerLayerId, baseUrl, geonetworkUrl, metadataType })
 
   const { viewerLayer } = await datocmsRequest({
     query: viewerLayerByIdQuery,
     variables: { id: viewerLayerId },
   })
 
-  await addThumbnailsToRecord(viewerLayer?.layer?.thumbnails, viewerLayerId, geonetwork)
-  
-  console.log('[LOG] Thumbnails synced', { viewerLayerId, baseUrl, geonetworkUrl, metadataType })
+  await addThumbnailsToRecord(viewerLayer?.layer?.thumbnails, viewerLayerId, geonetwork, { logSuccess: false })
 }

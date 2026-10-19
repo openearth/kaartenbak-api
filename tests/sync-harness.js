@@ -197,7 +197,11 @@ export async function runSync(snapshot, {
         operation: 'recordsRequest', baseUrl: this.baseUrl, ...details,
         ...(typeof body === 'string' ? { body } : body ? { body: '(thumbnail form data)' } : {}),
       })
-      if (request.method === 'PUT') return {}
+      if (request.method === 'PUT') {
+        return snapshot.scenario.uploadReport ?? {
+          numberOfRecordsProcessed: 1, numberOfRecordsWithErrors: 0, errors: [],
+        }
+      }
       if (request.method === 'GET' && request.url.endsWith('/attachments')) return []
       if (request.method === 'POST' && request.url.endsWith('/attachments')) {
         return { metadataId: snapshot.id, url: 'https://local.example.invalid/thumbnail.png' }

@@ -95,6 +95,68 @@ for (const eventType of ['create', 'update', 'publish']) {
   })
 }
 
+test('successful sync writes only one summary with upload and thumbnail outcomes', async () => {
+  const snapshot = fixture()
+  const result = await runSync(snapshot)
+  verifySync(snapshot, result)
+  assert.equal(result.logs.length, 1)
+  const [{ level, args: [message, summary] }] = result.logs
+  assert.equal(level, 'log')
+  assert.equal(message, '[LOG] Sync finished')
+  assert.equal(summary.id, id)
+  assert.equal(summary.type, 'viewer_layer')
+  assert.equal(summary.eventType, 'update')
+  assert.equal(summary.status, 'completed')
+  assert.ok(summary.durationMs >= 0)
+  assert.equal(summary.outcomes.length, 1)
+  assert.equal(summary.outcomes[0].layerTitle, 'Test peat layer')
+  assert.equal(summary.outcomes[0].xml, 'uploaded')
+  assert.equal(summary.outcomes[0].thumbnails, 'synced')
+  assert.ok(!JSON.stringify(result.logs).includes('<gmd:MD_Metadata'))
+})
+
+test('GeoNetwork processing failure is logged and summarised with the failed step', async () => {
+  const snapshot = fixture()
+  snapshot.scenario.uploadReport = {
+    numberOfRecordsProcessed: 0,
+    numberOfRecordsWithErrors: 1,
+    errors: [{ message: 'Invalid metadata' }],
+  }
+  const result = await runSync(snapshot)
+  assert.equal(result.logs.filter(({ level }) => level === 'error').length, 1)
+  const summaries = result.logs.filter(({ args }) => args[0] === '[LOG] Sync finished')
+  assert.equal(summaries.length, 1)
+  const summary = summaries[0].args[1]
+  assert.equal(summary.status, 'failed')
+  assert.equal(summary.outcomes[0].step, 'upload XML')
+  assert.match(summary.outcomes[0].error, /Invalid metadata/)
+  assert.equal(summary.outcomes[0].thumbnails, 'not synced')
+  assert.ok(result.operations.some(({ operation }) => operation === 'email'))
+})
+
+test('missing GeoNetwork processing report is not summarised as confirmed success', async () => {
+  const snapshot = fixture()
+  snapshot.scenario.uploadReport = {}
+  const result = await runSync(snapshot)
+  assert.equal(result.logs.length, 1)
+  const summary = result.logs[0].args[1]
+  assert.equal(summary.status, 'unconfirmed')
+  assert.equal(summary.outcomes[0].xml, 'unknown (no processing report)')
+})
+
+test('thumbnail failure keeps the successful XML upload in the final summary', async () => {
+  const snapshot = fixture()
+  snapshot.cms[2].data.viewerLayer.layer.thumbnails = [
+    { url: 'https://assets.example.invalid/missing.png', filename: 'missing.png' },
+  ]
+  const result = await runSync(snapshot)
+  const summary = result.logs.find(({ args }) => args[0] === '[LOG] Sync finished').args[1]
+  assert.equal(summary.status, 'failed')
+  assert.equal(summary.outcomes[0].xml, 'uploaded')
+  assert.equal(summary.outcomes[0].thumbnails, 'not synced')
+  assert.equal(summary.outcomes[0].step, 'sync thumbnails')
+})
+
 test('layer webhook syncs all linked viewer-layers and skips ones outside a viewer', async () => {
   const snapshot = layerWebhookFixture([
     { id }, { id: secondViewerLayerId }, { id: orphanViewerLayerId },
@@ -111,10 +173,10 @@ test('layer webhook syncs all linked viewer-layers and skips ones outside a view
   assert.deepEqual(uploads.map(({ body }) =>
     body.match(/<gmd:fileIdentifier>\s*<gco:CharacterString>(.*?)<\/gco:CharacterString>/s)?.[1]
   ).sort(), [id, secondViewerLayerId].sort())
-  assert.ok(result.logs.some(({ args }) =>
-    args[0] === '[LOG] No GeoNetwork instances found' &&
-    args[1]?.viewerLayerId === orphanViewerLayerId
-  ))
+  assert.ok(result.logs.find(({ args }) => args[0] === '[LOG] Sync finished')
+    .args[1].outcomes.some((outcome) =>
+      outcome.viewerLayerId === orphanViewerLayerId &&
+      outcome.reason === 'No GeoNetwork instances found'))
 })
 
 test('layer webhook with no linked viewer-layers logs that nothing matched', async () => {
@@ -128,10 +190,8 @@ test('layer webhook with no linked viewer-layers logs that nothing matched', asy
   assert.deepEqual(result.failures, [])
   assert.equal(result.operations.filter((operation) =>
     operation.operation === 'recordsRequest' && operation.method === 'PUT').length, 0)
-  assert.ok(result.logs.some(({ args }) =>
-    args[0] === '[LOG] No viewer layers linked to layer' &&
-    args[1]?.itemId === layerId
-  ))
+  assert.ok(result.logs.find(({ args }) => args[0] === '[LOG] Sync finished')
+    .args[1].outcomes.some((outcome) => outcome.reason === 'No viewer layers linked to layer'))
 })
 
 test('layer webhook errors notify contacts for linked viewer-layers', async () => {

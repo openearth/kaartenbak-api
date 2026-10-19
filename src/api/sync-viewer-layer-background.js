@@ -64,6 +64,20 @@ query ViewerLayersByInspireDatasetId($id: ItemId, $first: IntType, $skip: IntTyp
   }
 }`
 
+const viewerLayersByLayerIdQuery = /* graphql */ `
+query ViewerLayersByLayerId($id: ItemId, $first: IntType, $skip: IntType = 0) {
+  viewerLayers: allViewerLayers(
+    filter: {layer: {eq: $id}}
+    first: $first
+    skip: $skip
+  ) {
+    id
+  }
+  _allViewerLayersMeta(filter: {layer: {eq: $id}}) {
+    count
+  }
+}`
+
 function getRequestId(event) {
   return event.headers?.['x-nf-request-id'] || event.headers?.['X-Nf-Request-Id'] || 'unknown'
 }
@@ -101,6 +115,7 @@ export const handler = withServerDefaults(async (event, _) => {
   console.log('[LOG] Starting', { reqId, id, eventType })
 
   let menuTree = null
+  const notificationIds = new Set(id ? [id] : [])
   try {
     const { menus } = await datocmsRequest({
       query: viewersWithViewerLayersQuery,
@@ -123,7 +138,23 @@ export const handler = withServerDefaults(async (event, _) => {
     } else if (type === 'menu') {
       await syncViewer(menuTree, eventType, id)
     } else if (type === 'inspire_dataset') {
-      await syncInspireDataset(menuTree, eventType, id)
+      await syncLinkedViewerLayers(
+        menuTree,
+        eventType,
+        id,
+        viewerLayersByInspireDatasetIdQuery,
+        'INSPIRE dataset',
+        notificationIds
+      )
+    } else if (type === 'layer') {
+      await syncLinkedViewerLayers(
+        menuTree,
+        eventType,
+        id,
+        viewerLayersByLayerIdQuery,
+        'layer',
+        notificationIds
+      )
     } else {
       console.log('[LOG] Ignored webhook type', { reqId, type })
     }
@@ -131,7 +162,11 @@ export const handler = withServerDefaults(async (event, _) => {
     console.error('[LOG] Error', { reqId, id, eventType, err: e.message })
 
     if (menuTree && id) {
-      const emailContacts = findEmailContactsForId(menuTree, id)
+      const emailContacts = new Set(
+        [...notificationIds].flatMap((notificationId) =>
+          [...findEmailContactsForId(menuTree, notificationId)]
+        )
+      )
       for (const email of emailContacts) {
         console.log('[LOG] Sending email to', { reqId, email })
         try {
@@ -185,19 +220,27 @@ async function syncViewer(menuTree, eventType, viewerId) {
   await Promise.allSettled(requestsPromises)
 }
 
-async function syncInspireDataset(menuTree, eventType, inspireDatasetId) {
+async function syncLinkedViewerLayers(menuTree, eventType, itemId, query, itemType, notificationIds) {
   const { viewerLayers } = await datocmsRequest({
-    query: viewerLayersByInspireDatasetIdQuery,
-    variables: { id: inspireDatasetId },
+    query,
+    variables: { id: itemId },
   })
 
-  console.log('[LOG] Found viewer layers for INSPIRE dataset', {
-    inspireDatasetId,
+  const viewerLayerIds = viewerLayers.map(({ id: viewerLayerId }) => viewerLayerId)
+  viewerLayerIds.forEach((viewerLayerId) => notificationIds.add(viewerLayerId))
+
+  console.log(`[LOG] Found viewer layers for ${itemType}`, {
+    itemId,
     count: viewerLayers.length,
   })
 
+  if (viewerLayers.length === 0) {
+    console.log(`[LOG] No viewer layers linked to ${itemType}`, { itemId })
+    return
+  }
+
   const results = await Promise.allSettled(
-    viewerLayers.map(({ id: viewerLayerId }) =>
+    viewerLayerIds.map((viewerLayerId) =>
       syncViewerLayers(menuTree, eventType, viewerLayerId)
     )
   )

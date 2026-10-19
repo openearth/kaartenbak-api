@@ -94,7 +94,12 @@ function requestKey(query, variables) {
   return JSON.stringify([query.replace(/\s+/g, ' ').trim(), variables || {}])
 }
 
-export async function runSync(snapshot, { capture = false, eventType = 'update' } = {}) {
+export async function runSync(snapshot, {
+  capture = false,
+  eventType = 'update',
+  webhookType = 'viewer_layer',
+  webhookId = snapshot.id,
+} = {}) {
   validateId(snapshot.id)
   assert.ok(['create', 'update', 'publish'].includes(eventType), 'Event must be create, update, or publish')
   const operations = []
@@ -249,8 +254,8 @@ export async function runSync(snapshot, { capture = false, eventType = 'update' 
   const module = await load(path.join(sourceRoot, 'api', 'sync-viewer-layer-background.js'))
   await module.evaluate()
   const webhook = {
-    entity: { id: snapshot.id }, event_type: eventType,
-    related_entities: [{ type: 'item_type', attributes: { api_key: 'viewer_layer' } }],
+    entity: { id: webhookId }, event_type: eventType,
+    related_entities: [{ type: 'item_type', attributes: { api_key: webhookType } }],
   }
   const response = await module.namespace.handler({
     headers: { 'x-api-key': token }, httpMethod: 'POST',

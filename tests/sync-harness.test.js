@@ -9,6 +9,8 @@ const handlerQueries = [...handlerSource.matchAll(/const \w+ = \/\* graphql \*\/
 const metadataQuery = metadataSource.match(/const query = \/\* graphql \*\/ `([\s\S]*?)`/)[1]
 const id = 'local-viewer-layer'
 const layerId = 'local-layer'
+const secondViewerLayerId = 'second-local-viewer-layer'
+const orphanViewerLayerId = 'unassigned-viewer-layer'
 const wmsUrl = 'https://wms.example.invalid/?service=WMS&request=GetCapabilities'
 const capabilities = `<?xml version="1.0"?>
 <WMS_Capabilities><Capability><Layer><Layer>
@@ -56,6 +58,28 @@ function fixture(description = '<p>CMS <strong>description</strong> &amp; detail
   }
 }
 
+function layerWebhookFixture(viewerLayers) {
+  const snapshot = fixture()
+  if (viewerLayers.some(({ id: viewerLayerId }) => viewerLayerId === secondViewerLayerId)) {
+    const menuQuery = snapshot.cms[0]
+    menuQuery.data.menus[1].children.push({ id: secondViewerLayerId })
+    const metadataEntry = structuredClone(snapshot.cms.find((entry) => entry.query === metadataQuery))
+    metadataEntry.variables = { id: secondViewerLayerId }
+    metadataEntry.data.viewerLayer.id = secondViewerLayerId
+    snapshot.cms.push(metadataEntry, {
+      query: handlerQueries[1][1],
+      variables: { id: secondViewerLayerId },
+      data: { viewerLayer: { layer: { id: layerId, thumbnails: [] } } },
+    })
+  }
+  snapshot.cms.push({
+    query: handlerQueries[3][1],
+    variables: { id: layerId },
+    data: { viewerLayers },
+  })
+  return snapshot
+}
+
 for (const eventType of ['create', 'update', 'publish']) {
   test(`real webhook: ${eventType}, CMS plain text, preserved capabilities`, async () => {
     const snapshot = fixture()
@@ -70,6 +94,60 @@ for (const eventType of ['create', 'update', 'publish']) {
     assert.deepEqual(snapshot, before, 'Replay must not alter captured inputs')
   })
 }
+
+test('layer webhook syncs all linked viewer-layers and skips ones outside a viewer', async () => {
+  const snapshot = layerWebhookFixture([
+    { id }, { id: secondViewerLayerId }, { id: orphanViewerLayerId },
+  ])
+  const result = await runSync(snapshot, {
+    eventType: 'publish',
+    webhookType: 'layer',
+    webhookId: layerId,
+  })
+  const uploads = result.operations.filter((operation) =>
+    operation.operation === 'recordsRequest' && operation.method === 'PUT')
+
+  assert.equal(uploads.length, 2)
+  assert.deepEqual(uploads.map(({ body }) =>
+    body.match(/<gmd:fileIdentifier>\s*<gco:CharacterString>(.*?)<\/gco:CharacterString>/s)?.[1]
+  ).sort(), [id, secondViewerLayerId].sort())
+  assert.ok(result.logs.some(({ args }) =>
+    args[0] === '[LOG] No GeoNetwork instances found' &&
+    args[1]?.viewerLayerId === orphanViewerLayerId
+  ))
+})
+
+test('layer webhook with no linked viewer-layers logs that nothing matched', async () => {
+  const snapshot = layerWebhookFixture([])
+  const result = await runSync(snapshot, {
+    webhookType: 'layer',
+    webhookId: layerId,
+  })
+
+  assert.equal(result.response.statusCode, 202)
+  assert.deepEqual(result.failures, [])
+  assert.equal(result.operations.filter((operation) =>
+    operation.operation === 'recordsRequest' && operation.method === 'PUT').length, 0)
+  assert.ok(result.logs.some(({ args }) =>
+    args[0] === '[LOG] No viewer layers linked to layer' &&
+    args[1]?.itemId === layerId
+  ))
+})
+
+test('layer webhook errors notify contacts for linked viewer-layers', async () => {
+  const snapshot = layerWebhookFixture([{ id }])
+  snapshot.cms = snapshot.cms.filter((entry) => entry.query !== metadataQuery)
+  const result = await runSync(snapshot, {
+    webhookType: 'layer',
+    webhookId: layerId,
+  })
+
+  assert.equal(result.response.statusCode, 202)
+  assert.ok(result.operations.some(({ operation, message }) =>
+    operation === 'email' &&
+    message.Messages[0].To.some(({ Email }) => Email === 'local@example.invalid')
+  ))
+})
 
 for (const [description, expected] of [
   [null, ''], ['', ''], ['<p>&nbsp;<br></p>', ''],
